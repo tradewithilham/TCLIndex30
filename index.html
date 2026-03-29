@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCL Market 30 — The Chartist Lab | April 2026</title>
+  <meta name="description" content="30 saham pilihan The Chartist Lab berdasarkan analisis teknikal. Berlaku periode April 2026." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #C9A84C;
+      --gold-light: #E8C97A;
+      --gold-dim: #8A7040;
+      --black: #000000;
+      --border: #1A1A1A;
+      --border-mid: #252525;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--black); color: #E8E0D0; font-family: 'Outfit', sans-serif; min-height: 100vh; }
+
+    .hdr { background: var(--black); border-bottom: 1px solid var(--border); padding: 2.5rem 3rem 2rem; position: relative; }
+    .hdr::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, #C9A84C44, transparent); }
+    .top-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.5rem; }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .bubble { width: 48px; height: 48px; background: #0A0A0A; border: 1px solid #2A2A2A; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .brand-name { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--gold-light); letter-spacing: 0.03em; line-height: 1.2; }
+    .brand-sub { font-size: 10px; letter-spacing: 0.14em; color: #777; text-transform: uppercase; font-family: 'DM Mono', monospace; margin-top: 3px; }
+    .ig-row { display: flex; gap: 8px; margin-top: 7px; flex-wrap: wrap; }
+    .ig-tag { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--gold-dim); letter-spacing: 0.06em; border: 1px solid #3A2A0A; padding: 3px 8px; }
+    .validity { text-align: right; font-family: 'DM Mono', monospace; font-size: 10px; color: #666; letter-spacing: 0.06em; line-height: 1.9; }
+    .validity span { color: var(--gold); display: block; font-size: 13px; letter-spacing: 0.04em; }
+
+    .idx-title { margin-top: 2rem; }
+    .idx-eyebrow { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6A5A2A; }
+    .idx-h { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 600; color: #fff; letter-spacing: 0.01em; line-height: 1.1; margin-top: 6px; }
+    .idx-h em { color: var(--gold); font-style: normal; }
+    .rule { width: 48px; height: 1px; background: #C9A84C33; margin: 12px 0; }
+    .idx-desc { font-size: 13px; color: #999; line-height: 1.65; max-width: 560px; }
+
+    .content { padding: 2rem 3rem 0; }
+    .filter-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .filter-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-dim); }
+    .sector-select { background: #080808; border: 1px solid var(--border-mid); color: var(--gold); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 30px 7px 12px; letter-spacing: 0.06em; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c9a84c' stroke-width='1.2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; transition: border-color 0.2s; }
+    .sector-select:hover { border-color: #C9A84C55; }
+    .counter { font-family: 'DM Mono', monospace; font-size: 10px; color: #666; margin-left: auto; }
+    .counter span { color: var(--gold); }
+
+    .tbl-wrap { border: 1px solid var(--border); overflow-x: auto; }
+    table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+    .tbl thead tr { background: #070707; border-bottom: 1px solid #1E1E1E; }
+    .tbl thead th { padding: 10px 16px; text-align: left; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #6A5A2A; font-weight: 400; }
+    .tbl tbody tr { border-bottom: 1px solid #0F0F0F; transition: background 0.12s; }
+    .tbl tbody tr:hover { background: #0A0A0A; }
+    .tbl tbody tr:last-child { border-bottom: none; }
+    .tbl td { padding: 10px 16px; vertical-align: middle; }
+    .rank { font-family: 'DM Mono', monospace; font-size: 11px; color: #555; width: 36px; }
+    .ticker { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--gold-light); letter-spacing: 0.05em; }
+    .ename { font-size: 13px; color: #AAA; }
+    .stag { display: inline-flex; align-items: center; gap: 6px; }
+    .sdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .slbl { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .foot { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .foot-note { font-size: 10px; color: #555; font-family: 'DM Mono', monospace; letter-spacing: 0.04em; }
+    .wm { font-family: 'DM Mono', monospace; font-size: 9px; color: #444; letter-spacing: 0.12em; text-transform: uppercase; }
+
+    .cta-section { margin: 2.5rem 3rem 0; border: 1px solid #1E1700; background: #080600; padding: 2rem 2.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem; position: relative; overflow: hidden; }
+    .cta-section::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--gold); }
+    .cta-eyebrow { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #7A6A2A; margin-bottom: 10px; }
+    .cta-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: var(--gold-light); line-height: 1.3; margin-bottom: 8px; }
+    .cta-desc { font-size: 13px; color: #888; line-height: 1.65; max-width: 440px; }
+    .cta-desc b { color: #AAA; font-weight: 500; }
+    .cta-right { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+    .cta-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gold); color: #000; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 24px; border: none; cursor: pointer; text-decoration: none; transition: background 0.15s; }
+    .cta-btn:hover { background: var(--gold-light); }
+    .cta-ig { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .cta-ig-tag { font-family: 'DM Mono', monospace; font-size: 10px; color: #7A6A2A; border: 1px solid #2A1F08; padding: 6px 12px; letter-spacing: 0.04em; text-decoration: none; transition: border-color 0.15s, color 0.15s; }
+    .cta-ig-tag:hover { border-color: #C9A84C55; color: var(--gold); }
+
+    .global-foot { margin: 2.5rem 3rem 0; padding: 1.5rem 0 2rem; border-top: 1px solid #111; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .gf-brand { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: #555; letter-spacing: 0.04em; }
+    .gf-note { font-family: 'DM Mono', monospace; font-size: 10px; color: #444; letter-spacing: 0.06em; text-align: right; line-height: 1.7; }
+
+    @media (max-width: 640px) {
+      .hdr { padding: 1.5rem 1.25rem; }
+      .content { padding: 1.5rem 1.25rem 0; }
+      .cta-section { margin: 1.5rem 1.25rem 0; padding: 1.5rem 1.25rem; }
+      .global-foot { margin: 1.5rem 1.25rem 0; }
+      .idx-h { font-size: 34px; }
+      .cta-right { align-items: flex-start; }
+      .gf-note { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hdr">
+    <div class="top-row">
+      <div class="brand">
+        <div class="bubble">🫧</div>
+        <div>
+          <div class="brand-name">The Chartist Lab</div>
+          <div class="brand-sub">Premium Market Intelligence</div>
+          <div class="ig-row">
+            <span class="ig-tag">@thechartistlab</span>
+            <span class="ig-tag">@iamthechartist</span>
+          </div>
+        </div>
+      </div>
+      <div class="validity">
+        <div>Masa Berlaku</div>
+        <span>1 – 30 April 2026</span>
+      </div>
+    </div>
+    <div class="idx-title">
+      <div class="idx-eyebrow">Watchlist Resmi · Pilihan Teknikal</div>
+      <div class="idx-h">TCL Market <em>30</em></div>
+      <div class="rule"></div>
+      <div class="idx-desc">30 saham pilihan The Chartist Lab berdasarkan analisis teknikal. Berlaku periode April 2026.</div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="filter-bar">
+      <div class="filter-label">Filter Sektor</div>
+      <select class="sector-select" id="sf" onchange="filterStocks()">
+        <option value="all">Semua Sektor</option>
+        <option value="Energy">Energy</option>
+        <option value="Finance">Finance</option>
+        <option value="Property">Property</option>
+        <option value="Consumer">Consumer</option>
+        <option value="Infrastructure">Infrastructure</option>
+        <option value="Mining">Mining</option>
+        <option value="Plantation">Plantation</option>
+      </select>
+      <div class="counter">Menampilkan <span id="cnt">30</span> saham</div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th style="width:90px">Ticker</th>
+            <th>Nama Emiten</th>
+            <th style="width:130px">Sektor</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="foot">
+      <div class="foot-note">© 2026 The Chartist Lab — Bukan rekomendasi investasi.</div>
+      <div class="wm">TCL · April 2026</div>
+    </div>
+  </main>
+
+  <section class="cta-section">
+    <div class="cta-left">
+      <div class="cta-eyebrow">Private Group · The Chartist Lab</div>
+      <div class="cta-title">Mau analisis lebih dalam?<br>Gabung Private Group kami.</div>
+      <div class="cta-desc">Dapatkan akses ke <b>watchlist eksklusif</b>, analisis teknikal harian, dan diskusi langsung bersama komunitas trader The Chartist Lab. DM Instagram kami untuk info lebih lanjut.</div>
+    </div>
+    <div class="cta-right">
+      <a href="https://instagram.com/thechartistlab" target="_blank" rel="noopener" class="cta-btn">DM untuk Gabung ↗</a>
+      <div class="cta-ig">
+        <a href="https://instagram.com/thechartistlab" target="_blank" rel="noopener" class="cta-ig-tag">@thechartistlab</a>
+        <a href="https://instagram.com/iamthechartist" target="_blank" rel="noopener" class="cta-ig-tag">@iamthechartist</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="global-foot">
+    <div class="gf-brand">The Chartist Lab 🫧</div>
+    <div class="gf-note">
+      <div>instagram: @thechartistlab · @iamthechartist</div>
+      <div>bukan rekomendasi investasi — april 2026</div>
+    </div>
+  </footer>
+
+  <script>
+    const sc = {
+      Energy: '#E8A84C',
+      Finance: '#7BA7D4',
+      Property: '#F09B6A',
+      Consumer: '#70C98A',
+      Infrastructure: '#94A3B8',
+      Mining: '#C084FC',
+      Plantation: '#4ADE80'
+    };
+
+    const raw = [
+      { t: 'AADI', n: 'PT Adaro Andalan Indonesia Tbk', s: 'Mining' },
+      { t: 'ADMR', n: 'PT Alamtri Minerals Indonesia Tbk', s: 'Mining' },
+      { t: 'ADRO', n: 'PT Alamtri Resources Indonesia Tbk', s: 'Mining' },
+      { t: 'AKRA', n: 'PT AKR Corporindo Tbk', s: 'Energy' },
+      { t: 'APLN', n: 'PT Agung Podomoro Land Tbk', s: 'Property' },
+      { t: 'BBNI', n: 'PT Bank Negara Indonesia (Persero) Tbk', s: 'Finance' },
+      { t: 'BBTN', n: 'PT Bank Tabungan Negara (Persero) Tbk', s: 'Finance' },
+      { t: 'BRIS', n: 'PT Bank Syariah Indonesia Tbk', s: 'Finance' },
+      { t: 'DGWG', n: 'PT Delta Giri Wacana Tbk', s: 'Consumer' },
+      { t: 'ELSA', n: 'PT Elnusa Tbk', s: 'Energy' },
+      { t: 'EMAS', n: 'PT Merdeka Gold Resources Tbk', s: 'Mining' },
+      { t: 'ENRG', n: 'PT Energi Mega Persada Tbk', s: 'Energy' },
+      { t: 'ESSA', n: 'PT ESSA Industries Indonesia Tbk', s: 'Energy' },
+      { t: 'HUMI', n: 'PT Humpuss Maritim Internasional Tbk', s: 'Infrastructure' },
+      { t: 'INKP', n: 'PT Indah Kiat Pulp & Paper Tbk', s: 'Infrastructure' },
+      { t: 'KIJA', n: 'PT Kawasan Industri Jababeka Tbk', s: 'Property' },
+      { t: 'LSIP', n: 'PT Perusahaan Perkebunan London Sumatra Tbk', s: 'Plantation' },
+      { t: 'MEDC', n: 'PT Medco Energi Internasional Tbk', s: 'Energy' },
+      { t: 'MINA', n: 'PT Sanurhasta Mitra Tbk', s: 'Consumer' },
+      { t: 'MSJA', n: 'PT Multi Spunindo Jaya Tbk', s: 'Infrastructure' },
+      { t: 'NSSS', n: 'PT Nusantara Sawit Sejahtera Tbk', s: 'Plantation' },
+      { t: 'OILS', n: 'PT Indo Oil Perkasa Tbk', s: 'Energy' },
+      { t: 'PTBA', n: 'PT Bukit Asam (Persero) Tbk', s: 'Mining' },
+      { t: 'SIMP', n: 'PT Salim Ivomas Pratama Tbk', s: 'Plantation' },
+      { t: 'SOCI', n: 'PT Soechi Lines Tbk', s: 'Infrastructure' },
+      { t: 'SRTG', n: 'PT Saratoga Investama Sedaya Tbk', s: 'Finance' },
+      { t: 'TAPG', n: 'PT Triputra Agro Persada Tbk', s: 'Plantation' },
+      { t: 'TINS', n: 'PT Timah Tbk', s: 'Mining' },
+      { t: 'UNTR', n: 'PT United Tractors Tbk', s: 'Mining' },
+      { t: 'WMUU', n: 'PT Widodo Makmur Unggas Tbk', s: 'Consumer' },
+    ];
+
+    function renderStocks(list) {
+      const tb = document.getElementById('tbody');
+      tb.innerHTML = '';
+      list.forEach((s, i) => {
+        const col = sc[s.s] || '#777';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="rank">${String(i + 1).padStart(2, '0')}</td>
+          <td><span class="ticker">${s.t}</span></td>
+          <td><span class="ename">${s.n}</span></td>
+          <td><span class="stag"><span class="sdot" style="background:${col}"></span><span class="slbl" style="color:${col}">${s.s}</span></span></td>`;
+        tb.appendChild(tr);
+      });
+      document.getElementById('cnt').textContent = list.length;
+    }
+
+    function filterStocks() {
+      const v = document.getElementById('sf').value;
+      renderStocks(v === 'all' ? raw : raw.filter(s => s.s === v));
+    }
+
+    renderStocks(raw);
+  </script>
+</body>
+</html>
