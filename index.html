@@ -172,14 +172,8 @@
       <div class="perf-title">— Performa Index · TCL vs IHSG vs IDX30</div>
       <div class="perf-wrap">
         <div class="perf-top">
-          <div class="perf-chart-area" style="position:relative;width:100%;overflow:hidden;background:#000;">
-            <div style="position:relative;width:150%;margin-left:-25%;padding-bottom:72%;height:0;">
-              <iframe
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQYBrznM-ehLiKWznNziPVnK4sETcTQD-_vrc9BjZ-my9WqEZlaWfESFAlr0dnF5VOxEkU7GpqwIIg1/pubchart?oid=1500258514&format=interactive"
-                style="position:absolute;top:-12%;left:0;width:100%;height:115%;border:none;"
-                frameborder="0" scrolling="no" allowfullscreen>
-              </iframe>
-            </div>
+          <div class="perf-chart-area" style="position:relative;width:100%;min-height:260px;">
+            <canvas id="perfChart" style="width:100%;"></canvas>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;min-width:160px;">
             <div class="perf-card">
@@ -281,6 +275,8 @@
     </div>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script>
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSWYVvomntKZBSAotDDoT3twaLucmcj1tagUmVi1Ez140GSzzQfsQd3OlwJpfQEgWwzcSEg8a0gf_rG/pub?gid=0&single=true&output=csv';
 
@@ -409,7 +405,8 @@
     const TCLI_URL = 'https://corsproxy.io/?' + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vQYBrznM-ehLiKWznNziPVnK4sETcTQD-_vrc9BjZ-my9WqEZlaWfESFAlr0dnF5VOxEkU7GpqwIIg1/pub?gid=1275777087&single=true&output=csv');
 
     async function loadChart() {
-      // Static fallback from latest data
+      const CSV_CHART = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQYBrznM-ehLiKWznNziPVnK4sETcTQD-_vrc9BjZ-my9WqEZlaWfESFAlr0dnF5VOxEkU7GpqwIIg1/pub?gid=1275777087&single=true&output=csv';
+
       function setCards(tcl, ihsg, idx30) {
         function fmtVal(v, id) {
           const n = parseFloat(v);
@@ -426,39 +423,155 @@
         resEl.className = 'perf-result-val ' + (isOut ? 'out' : 'under');
       }
 
-      // Try live fetch first
-      const csvRaw = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQYBrznM-ehLiKWznNziPVnK4sETcTQD-_vrc9BjZ-my9WqEZlaWfESFAlr0dnF5VOxEkU7GpqwIIg1/pub?gid=1275777087&single=true&output=csv';
-      let loaded = false;
+      function drawChart(labels, tclData, ihsgData, idx30Data) {
+        const canvas = document.getElementById('perfChart');
+        canvas.height = window.innerWidth < 640 ? 260 : 300;
+        const ctx = canvas.getContext('2d');
+        Chart.register(ChartDataLabels);
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'The Chartist Lab',
+                data: tclData,
+                borderColor: '#4A9EFF',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#4A9EFF',
+                tension: 0.4,
+                fill: false,
+                datalabels: {
+                  color: '#4A9EFF',
+                  font: { family: 'DM Mono', size: window.innerWidth < 640 ? 7 : 9, weight: '500' },
+                  formatter: v => v > 0 ? '+'+v.toFixed(2)+'%' : v.toFixed(2)+'%',
+                  anchor: 'end', align: 'top', offset: 2
+                }
+              },
+              {
+                label: 'IHSG',
+                data: ihsgData,
+                borderColor: '#F5C518',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#F5C518',
+                tension: 0.4,
+                fill: false,
+                datalabels: {
+                  color: '#F5C518',
+                  font: { family: 'DM Mono', size: window.innerWidth < 640 ? 7 : 9, weight: '500' },
+                  formatter: v => v > 0 ? '+'+v.toFixed(2)+'%' : v.toFixed(2)+'%',
+                  anchor: 'end', align: 'bottom', offset: 2
+                }
+              },
+              {
+                label: 'IDX30',
+                data: idx30Data,
+                borderColor: '#F87171',
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#F87171',
+                tension: 0.4,
+                fill: false,
+                datalabels: {
+                  color: '#F87171',
+                  font: { family: 'DM Mono', size: window.innerWidth < 640 ? 7 : 9, weight: '500' },
+                  formatter: v => v > 0 ? '+'+v.toFixed(2)+'%' : v.toFixed(2)+'%',
+                  anchor: 'start', align: 'bottom', offset: 2
+                }
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              datalabels: { display: true },
+              tooltip: {
+                backgroundColor: '#0D0D0D',
+                borderColor: '#2A2A2A',
+                borderWidth: 1,
+                titleColor: '#888',
+                bodyColor: '#CCC',
+                titleFont: { family: 'DM Mono', size: 10 },
+                bodyFont: { family: 'DM Mono', size: 11 },
+                callbacks: {
+                  label: c => ` ${c.dataset.label}: ${c.parsed.y > 0 ? '+' : ''}${c.parsed.y.toFixed(2)}%`
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: '#BBB',
+                  font: { family: 'DM Mono', size: 9 },
+                  maxTicksLimit: window.innerWidth < 640 ? 5 : 10,
+                  maxRotation: 45
+                },
+                grid: { color: '#1A1A1A' }
+              },
+              y: {
+                ticks: {
+                  color: '#BBB',
+                  font: { family: 'DM Mono', size: 9 },
+                  callback: v => v.toFixed(1) + '%'
+                },
+                grid: { color: '#1A1A1A' }
+              }
+            }
+          }
+        });
+      }
+
+      // Try proxies
       const proxies = [
-        'https://corsproxy.io/?' + encodeURIComponent(csvRaw),
-        'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvRaw),
-        'https://cors.eu.org/' + csvRaw,
+        'https://corsproxy.io/?' + encodeURIComponent(CSV_CHART),
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent(CSV_CHART),
       ];
+
+      let loaded = false;
       for (const p of proxies) {
         try {
           const r = await fetch(p, { cache: 'no-store' });
           if (!r.ok) continue;
           const csv = await r.text();
           if (!csv || csv.length < 20) continue;
+
           const rows = csv.trim().split('\n').map(l => l.split(',').map(c => c.replace(/"/g,'').trim()));
           const hdr = rows[0].map(h => h.toUpperCase());
+          const dateIdx  = hdr.findIndex(h => h.includes('DATE'));
           const tclIdx   = hdr.findIndex(h => h === 'TCL');
           const idx30Idx = hdr.findIndex(h => h.includes('IDX30'));
           const ihsgIdx  = hdr.findIndex(h => h.includes('IHSG'));
-          const dataRows = rows.slice(1).filter(r => r[tclIdx] && r[tclIdx] !== '');
+
+          const dataRows = rows.slice(1).filter(r => r[dateIdx] && r[tclIdx] && r[tclIdx] !== '');
           if (!dataRows.length) continue;
-          const last = dataRows[dataRows.length - 1];
-          setCards(
-            last[tclIdx].replace('%',''),
-            last[ihsgIdx].replace('%',''),
-            last[idx30Idx].replace('%','')
-          );
+
+          const labels    = dataRows.map(r => r[dateIdx]);
+          const tclData   = dataRows.map(r => parseFloat(r[tclIdx].replace('%','')) || 0);
+          const idx30Data = dataRows.map(r => parseFloat(r[idx30Idx].replace('%','')) || 0);
+          const ihsgData  = dataRows.map(r => parseFloat(r[ihsgIdx].replace('%','')) || 0);
+
+          const last = dataRows.length - 1;
+          setCards(tclData[last], ihsgData[last], idx30Data[last]);
+          drawChart(labels, tclData, ihsgData, idx30Data);
           loaded = true;
           break;
         } catch(e) { continue; }
       }
-      // fallback to latest known values from screenshot
-      if (!loaded) setCards(0.21, -0.94, -1.92);
+
+      // Fallback: static data from last known values
+      if (!loaded) {
+        const fallbackLabels = ['2 Mar','3 Mar','4 Mar','5 Mar','6 Mar','9 Mar','10 Mar','11 Mar','12 Mar','13 Mar','16 Mar','17 Mar','25 Mar','26 Mar','27 Mar'];
+        const fallbackTCL   = [0, -0.01, -4.12, 2.52, -2.06, -1.71, 1.01, -2.29, 1.14, -1.41, 2.14, 1.93, 0.36, -1.00, 0.21];
+        const fallbackIHSG  = [0, -0.97, -4.79, 1.73, -1.65, -3.38, 1.39, -0.70, -0.37, -3.15, -1.64, 1.19, 2.67, -1.93, -0.94];
+        const fallbackIDX30 = [0, -0.48, -4.10, 2.13, -2.18, -3.21, 0.99, -0.63, 0.43, -2.20, -1.12, 1.40, 3.39, -2.10, -1.92];
+        setCards(0.21, -0.94, -1.92);
+        drawChart(fallbackLabels, fallbackTCL, fallbackIHSG, fallbackIDX30);
+      }
     }
 
     loadData();
