@@ -321,10 +321,17 @@
 
       // CORS proxy list — dipakai bergantian, fallback ke berikutnya jika gagal
       proxies: [
-        url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
         url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-        url => `https://cors-anywhere.herokuapp.com/${url}`,
+        url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+        url => `https://thingproxy.freeboard.io/fetch/${url}`,
       ],
+
+      // ── OPTIONAL: Google Apps Script relay (bebas CORS, paling reliable)
+      // Cara setup: lihat komentar di bawah fungsi loadChart()
+      // Kosongkan string jika belum setup
+      appsScriptChartUrl: '',
+      appsScriptStockUrl: '',
 
       // Auto-refresh interval (ms). 0 = tidak auto-refresh
       autoRefreshMs: 5 * 60 * 1000, // 5 menit
@@ -505,8 +512,19 @@
 
       let csvText = null;
 
+      // Coba 0: Google Apps Script relay (paling reliable)
+      if (CONFIG.appsScriptStockUrl) {
+        try {
+          const res = await fetchWithCacheBust(CONFIG.appsScriptStockUrl, 8000);
+          if (res.ok) {
+            const t = await res.text();
+            if (t && t.length > 30) csvText = t;
+          }
+        } catch(e) {}
+      }
+
       // Coba 1: langsung (tanpa proxy)
-      try {
+      if (!csvText) try {
         const res = await fetchWithCacheBust(CONFIG.stockCsvUrl, 7000);
         if (res.ok) {
           const t = await res.text();
@@ -741,6 +759,24 @@
     async function loadChart() {
       setChartStatus('', 'Memuat chart...');
 
+      // ── Coba 0: Google Apps Script relay (paling reliable, bebas CORS)
+      if (CONFIG.appsScriptChartUrl) {
+        try {
+          const res = await fetchWithCacheBust(CONFIG.appsScriptChartUrl, 8000);
+          if (res.ok) {
+            const text = await res.text();
+            const parsed = parseCsvToChartData(text);
+            if (parsed && parsed.labels.length > 0) {
+              const last = parsed.labels.length - 1;
+              setCards(parsed.tclData[last], parsed.ihsgData[last], parsed.idx30Data[last]);
+              drawChart(parsed.labels, parsed.tclData, parsed.ihsgData, parsed.idx30Data);
+              setChartStatus('live', `Live (Apps Script) · ${parsed.labels.length} data points · ${fmtNow()}`);
+              return;
+            }
+          }
+        } catch(e) { /* lanjut */ }
+      }
+
       // ── Coba 1: Langsung fetch CSV tanpa proxy (kadang work kalau Google Sheets allow)
       try {
         const res = await fetchWithCacheBust(CONFIG.chartCsvUrl, 6000);
@@ -772,15 +808,15 @@
 
       // ── Fallback: data statis (update manual tiap akhir bulan)
       // CATATAN: Update array di bawah ini setiap kali ada data baru yang tidak bisa di-fetch
-      const fbLabels   = ['2 Mar','3 Mar','4 Mar','5 Mar','6 Mar','9 Mar','10 Mar','11 Mar','12 Mar','13 Mar','16 Mar','17 Mar','25 Mar','26 Mar','27 Mar','28 Mar','30 Mar'];
-      const fbTCL      = [0, -0.01, -4.12, 2.52, -2.06, -1.71, 1.01, -2.29, 1.14, -1.41, 2.14, 1.93, 0.36, -1.00, 0.21, 0.19, -1.18];
-      const fbIHSG     = [0, -0.97, -4.79, 1.73, -1.65, -3.38, 1.39, -0.70, -0.37, -3.15, -1.64, 1.19, 2.67, -1.93, -0.94, 0.00, -0.84];
-      const fbIDX30    = [0, -0.48, -4.10, 2.13, -2.18, -3.21, 0.99, -0.63, 0.43, -2.20, -1.12, 1.40, 3.39, -2.10, -1.92, 0.00, -1.92];
+      const fbLabels   = ['4 Mar','5 Mar','6 Mar','9 Mar','10 Mar','11 Mar','12 Mar','13 Mar','16 Mar','17 Mar','25 Mar','26 Mar','27 Mar','30 Mar','31 Mar'];
+      const fbTCL      = [-4.15, 2.53, -2.04, -1.72, 1.04, -2.30, 1.14, -1.42, 2.07, 1.91, 0.42, -1.00, 0.19, 1.40, -1.52];
+      const fbIHSG     = [-0.97, -4.79, 1.73, -1.65, -3.38, 1.39, -0.70, -0.37, -3.15, -1.64, 1.19, 2.67, -1.93, -0.84, -0.94];
+      const fbIDX30    = [-0.48, -4.10, 2.13, -2.18, -3.21, 0.99, -0.63, 0.43, -2.20, -1.12, 1.40, 3.39, -2.10, -1.92, -1.92];
 
       const last = fbLabels.length - 1;
       setCards(fbTCL[last], fbIHSG[last], fbIDX30[last]);
       drawChart(fbLabels, fbTCL, fbIHSG, fbIDX30);
-      setChartStatus('fallback', `Fallback data · Live fetch tidak tersedia · Update manual: 30 Mar`);
+      setChartStatus('fallback', `Fallback data · Live fetch tidak tersedia · Update manual: 31 Mar 2026`);
     }
 
     // ─────────────────────────────────────────────
@@ -803,6 +839,32 @@
     // ─────────────────────────────────────────────
     loadData();
     loadChart();
+
+    /*
+    ═══════════════════════════════════════════════════════
+    CARA SETUP GOOGLE APPS SCRIPT RELAY (RECOMMENDED)
+    Supaya chart & tabel selalu live tanpa bergantung proxy
+    ═══════════════════════════════════════════════════════
+
+    1. Buka: https://script.google.com/
+    2. Buat project baru, paste kode berikut:
+
+    function doGet(e) {
+      var url = e.parameter.url;
+      var response = UrlFetchApp.fetch(url);
+      return ContentService.createTextOutput(response.getContentText())
+        .setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    3. Klik Deploy > New Deployment > Web App
+       - Execute as: Me
+       - Who has access: Anyone
+    4. Copy URL deployment-nya
+    5. Isi CONFIG.appsScriptChartUrl dan appsScriptStockUrl:
+       appsScriptChartUrl: 'https://script.google.com/macros/s/XXX/exec?url=' + encodeURIComponent(CONFIG.chartCsvUrl),
+       appsScriptStockUrl: 'https://script.google.com/macros/s/XXX/exec?url=' + encodeURIComponent(CONFIG.stockCsvUrl),
+    ═══════════════════════════════════════════════════════
+    */
   </script>
 </body>
 </html>
