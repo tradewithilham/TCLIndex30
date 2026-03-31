@@ -527,29 +527,49 @@
       }
 
       try {
-        // Parse CSV manual
+        // Parse CSV — pakai index-based agar tidak bergantung nama kolom exact
         const lines = csvText.trim().split('\n');
         const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
+
+        // Deteksi index tiap kolom berdasarkan keyword
+        const iT = headers.findIndex(h => h.includes('ticker'));
+        const iN = headers.findIndex(h => h === 'name' || h.includes('nama'));
+        const iS = headers.findIndex(h => h.includes('sector') || h.includes('sektor'));
+        const iP = headers.findIndex(h => h === 'price' || h === 'harga' || h.includes('current'));
+        // %Chg bisa jadi: %chg, %change, chg, change — pakai index terakhir yang cocok
+        const iC = headers.findIndex(h => h.includes('chg') || h.includes('change'));
+
+        function getVal(vals, idx) {
+          if (idx < 0 || !vals[idx]) return '';
+          return vals[idx].replace(/"/g, '').trim();
+        }
+
         const rows = lines.slice(1).map(line => {
-          const vals = line.match(/(".*?"|[^,\n]+)(?=,|$)/g) || line.split(',');
-          const obj = {};
-          headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/"/g, '').trim(); });
-          return obj;
+          // Handle CSV dengan koma dalam quotes
+          const vals = [];
+          let cur = '', inQ = false;
+          for (let i = 0; i < line.length; i++) {
+            if (line[i] === '"') { inQ = !inQ; }
+            else if (line[i] === ',' && !inQ) { vals.push(cur); cur = ''; }
+            else { cur += line[i]; }
+          }
+          vals.push(cur);
+          return {
+            ticker: getVal(vals, iT),
+            name:   getVal(vals, iN),
+            sector: getVal(vals, iS),
+            price:  getVal(vals, iP),
+            '%chg': getVal(vals, iC),
+          };
         });
 
         allData = rows
           .filter(r => r.ticker && r.ticker.length > 0)
-          .map(r => {
-            const ticker = r.ticker.toUpperCase();
-            const sheetSector = (r.sector || r['sector'] || '').trim();
-            return {
-              ticker,
-              name:   r.name   || r['name']   || '',
-              sector: sheetSector || tickerSector[ticker] || '',
-              price:  r.price  || r['price']  || '',
-              '%chg': r['%chg'] || r['change'] || r['%change'] || '',
-            };
-          });
+          .map(r => ({
+            ...r,
+            ticker: r.ticker.toUpperCase(),
+            sector: r.sector || tickerSector[r.ticker.toUpperCase()] || '',
+          }));
 
         if (!allData.length) throw new Error('Data kosong setelah parse');
 
