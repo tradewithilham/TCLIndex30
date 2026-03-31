@@ -312,9 +312,8 @@
     // CONFIG — ganti URL di sini kalau sheet berubah
     // ─────────────────────────────────────────────
     const CONFIG = {
-      // Tabel saham (sheet TCLINDEX30)
-      stockSheetId: '1wo_2B5Ww9fUC3_9frVLJovs8HDPIRP7x2OKGr7P5wK8',
-      stockSheetTab: 'TCLINDEX30',
+      // Tabel saham — CSV published dari Google Sheets
+      stockCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSWYVvomntKZBSAotDDoT3twaLucmcj1tagUmVi1Ez140GSzzQfsQd3OlwJpfQEgWwzcSEg8a0gf_rG/pub?gid=0&single=true&output=csv',
 
       // Chart performa TCL vs IHSG vs IDX30
       // CSV published dari Google Sheets (gid=1275777087)
@@ -486,37 +485,82 @@
     // Sumber: opensheet.elk.sh (JSON wrapper untuk Google Sheets)
     // + cache-bust supaya selalu fresh
     // ─────────────────────────────────────────────
+    function parseCsvToStocks(csvText) {
+      const rows = parseCsvToChartData ? (() => {
+        const lines = csvText.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
+        return lines.slice(1).map(line => {
+          const vals = line.match(/(".*?"|[^,\n]+)(?=,|$)/g) || line.split(',');
+          const obj = {};
+          headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/"/g, '').trim(); });
+          return obj;
+        });
+      })() : [];
+      return rows.filter(r => r.ticker || r['ticker']);
+    }
+
     async function loadData() {
       document.getElementById('tbody').innerHTML = `<tr><td colspan="6"><div class="loading-state">Memuat data<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div></td></tr>`;
       setTableStatus('loading', 'Menghubungi Google Sheets...');
 
-      try {
-        const jsonUrl = `https://opensheet.elk.sh/${CONFIG.stockSheetId}/${CONFIG.stockSheetTab}`;
-        const res = await fetchWithCacheBust(jsonUrl, 10000);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const json = await res.json();
-        if (!Array.isArray(json) || !json.length) throw new Error('Data kosong');
+      let csvText = null;
 
-        allData = json.map(row => {
-          const ticker = (row['Ticker'] || row['ticker'] || '').trim();
-          const sheetSector = (row['Sector'] || row['sector'] || '').trim();
-          return {
-            ticker,
-            name:   (row['Name']   || row['name']   || '').trim(),
-            sector: sheetSector || tickerSector[ticker] || '',
-            price:  (row['Price']  || row['price']  || '').trim(),
-            '%chg': (row['%Chg']   || row['%chg']   || row['Change'] || '').trim(),
-          };
-        }).filter(r => r.ticker);
+      // Coba 1: langsung (tanpa proxy)
+      try {
+        const res = await fetchWithCacheBust(CONFIG.stockCsvUrl, 7000);
+        if (res.ok) {
+          const t = await res.text();
+          if (t && t.length > 30) csvText = t;
+        }
+      } catch(e) {}
+
+      // Coba 2: via proxy chain
+      if (!csvText) {
+        csvText = await fetchCsvViaProxies(CONFIG.stockCsvUrl);
+      }
+
+      if (!csvText) {
+        document.getElementById('tbody').innerHTML = `<tr><td colspan="6"><div class="error-state">Gagal memuat data. Coba klik ↻ Refresh atau periksa koneksi.</div></td></tr>`;
+        document.getElementById('cnt').textContent = '—';
+        setTableStatus('error', `<span class="error-label">✕ Gagal memuat</span> — semua sumber tidak tersedia`);
+        return;
+      }
+
+      try {
+        // Parse CSV manual
+        const lines = csvText.trim().split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
+        const rows = lines.slice(1).map(line => {
+          const vals = line.match(/(".*?"|[^,\n]+)(?=,|$)/g) || line.split(',');
+          const obj = {};
+          headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/"/g, '').trim(); });
+          return obj;
+        });
+
+        allData = rows
+          .filter(r => r.ticker && r.ticker.length > 0)
+          .map(r => {
+            const ticker = r.ticker.toUpperCase();
+            const sheetSector = (r.sector || r['sector'] || '').trim();
+            return {
+              ticker,
+              name:   r.name   || r['name']   || '',
+              sector: sheetSector || tickerSector[ticker] || '',
+              price:  r.price  || r['price']  || '',
+              '%chg': r['%chg'] || r['change'] || r['%change'] || '',
+            };
+          });
+
+        if (!allData.length) throw new Error('Data kosong setelah parse');
 
         filterStocks();
         setTableStatus('live',
-          `<span class="live-label">● LIVE</span> — data dari Google Sheets · dimuat: <span class="highlight">${fmtNow()}</span>`
+          `<span class="live-label">● LIVE</span> — ${allData.length} saham dari Google Sheets · dimuat: <span class="highlight">${fmtNow()}</span>`
         );
-      } catch (err) {
-        document.getElementById('tbody').innerHTML = `<tr><td colspan="6"><div class="error-state">Gagal memuat data. Coba klik ↻ Refresh atau periksa koneksi.</div></td></tr>`;
+      } catch(err) {
+        document.getElementById('tbody').innerHTML = `<tr><td colspan="6"><div class="error-state">Data diterima tapi gagal diproses. Coba klik ↻ Refresh.</div></td></tr>`;
         document.getElementById('cnt').textContent = '—';
-        setTableStatus('error', `<span class="error-label">✕ Gagal memuat</span> — ${err.message}`);
+        setTableStatus('error', `<span class="error-label">✕ Parse error</span> — ${err.message}`);
       }
     }
 
