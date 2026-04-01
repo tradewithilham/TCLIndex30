@@ -202,7 +202,7 @@
                 <div class="perf-card-val" id="tcl-val">—</div>
               </div>
               <div class="perf-card" style="flex:1;min-width:80px;">
-                <div class="perf-card-label" style="color:#F5C518;font-weight:600;letter-spacing:0.08em;">IHSG</div>
+                <div class="perf-card-label" style="color:#F5C518;font-weight:600;letter-spacing:0.08em;">Composite/IHSG</div>
                 <div class="perf-card-val" id="ihsg-val">—</div>
               </div>
               <div class="perf-card" style="flex:1;min-width:80px;">
@@ -218,7 +218,7 @@
         </div>
         <div class="perf-legend">
           <div class="perf-leg-item"><div class="perf-leg-dot" style="background:#4A9EFF"></div>The Chartist Lab</div>
-          <div class="perf-leg-item"><div class="perf-leg-dot" style="background:#F5C518"></div>IHSG</div>
+          <div class="perf-leg-item"><div class="perf-leg-dot" style="background:#F5C518"></div>Composite/IHSG</div>
           <div class="perf-leg-item"><div class="perf-leg-dot" style="background:#F87171"></div>IDX30</div>
         </div>
         <div class="chart-status" id="chart-status">
@@ -558,7 +558,7 @@
           datasets: [
             { label:'The Chartist Lab', data:tclData,   borderColor:'#4A9EFF', borderWidth:2, pointRadius:3, pointBackgroundColor:'#4A9EFF', tension:0.4, fill:false,
               datalabels:{ color:'#4A9EFF', font:{family:'DM Mono',size:window.innerWidth<640?6:9,weight:'500'}, formatter:v=>v>0?'+'+v.toFixed(2)+'%':v.toFixed(2)+'%', anchor:'end', align:'top', offset:2 } },
-            { label:'IHSG',             data:ihsgData,  borderColor:'#F5C518', borderWidth:2, pointRadius:3, pointBackgroundColor:'#F5C518', tension:0.4, fill:false,
+            { label:'Composite/IHSG',             data:ihsgData,  borderColor:'#F5C518', borderWidth:2, pointRadius:3, pointBackgroundColor:'#F5C518', tension:0.4, fill:false,
               datalabels:{ color:'#F5C518', font:{family:'DM Mono',size:window.innerWidth<640?6:9,weight:'500'}, formatter:v=>v>0?'+'+v.toFixed(2)+'%':v.toFixed(2)+'%', anchor:'end', align:'bottom', offset:2 } },
             { label:'IDX30',            data:idx30Data, borderColor:'#F87171', borderWidth:2, pointRadius:3, pointBackgroundColor:'#F87171', tension:0.4, fill:false,
               datalabels:{ color:'#F87171', font:{family:'DM Mono',size:window.innerWidth<640?6:9,weight:'500'}, formatter:v=>v>0?'+'+v.toFixed(2)+'%':v.toFixed(2)+'%', anchor:'start', align:'bottom', offset:2 } },
@@ -600,10 +600,15 @@
         const t  = r.findIndex(h => h === 'TCL');
         if (d >= 0 && t >= 0) {
           hdrRowIdx = i;
-          iDate = d;
-          iTCL  = t;
-          iIDX30 = r.findIndex(h => h.includes('IDX30') || h.includes('IDX 30'));
-          iComp  = r.findIndex(h => h.includes('COMPOSITE') || h.includes('IHSG'));
+          iDate  = d;
+          iTCL   = t;
+          // Urutan kolom di sheet: Date(Y=0), TCL(Z=1), IDX30(AA=2), Composite/IHSG(AB=3)
+          // Pastikan IDX30 diambil sebelum COMPOSITE
+          iIDX30 = r.findIndex(h => h === 'IDX30' || h === 'IDX 30');
+          iComp  = r.findIndex(h => h === 'COMPOSITE' || h === 'IHSG' || h === 'IHSG/COMPOSITE');
+          // Fallback: kalau IDX30 tidak ketemu tapi ada kolom ke-3
+          if (iIDX30 < 0 && r.length > t + 1) iIDX30 = t + 1;
+          if (iComp  < 0 && r.length > t + 2) iComp  = t + 2;
           break;
         }
       }
@@ -655,12 +660,12 @@
       }
 
       // Fallback statis — data persis dari spreadsheet Y3:AB18 per 1 Apr 2026
-      // Date | TCL   | IDX30  | Composite(IHSG)
+      // Kolom: Date(Y) | TCL(Z) | IDX30(AA) | Composite=IHSG(AB)
       const fb = {
-        labels:   ['5 Mar 2026','6 Mar 2026','9 Mar 2026','10 Mar 2026','11 Mar 2026','12 Mar 2026','13 Mar 2026','16 Mar 2026','17 Mar 2026','25 Mar 2026','26 Mar 2026','27 Mar 2026','30 Mar 2026','31 Mar 2026','1 Apr 2026'],
-        tclData:  [-2.06, -1.75, 1.08, -2.28, 1.08, -1.44, 2.10, 1.93, 0.37, -1.03, 0.21, 1.88, -1.53, -0.75, 0],
-        idx30Data:[-2.18, -3.21, 0.99, -0.63, 0.43, -2.20, -1.12, 1.40, 3.39, -2.10, -1.92, -0.59, -0.03, 1.21, 0],
-        ihsgData: [-1.65, -3.38, 1.39, -0.70, -0.37, -3.15, -1.64, 1.19, 2.67, -1.93, -0.94, -0.08, -0.62, 1.93, 0],
+        labels:   ['6 Mar 2026','9 Mar 2026','10 Mar 2026','11 Mar 2026','12 Mar 2026','13 Mar 2026','16 Mar 2026','17 Mar 2026','25 Mar 2026','26 Mar 2026','27 Mar 2026','30 Mar 2026','31 Mar 2026','1 Apr 2026'],
+        tclData:  [-2.06, -1.75,  1.08, -2.28,  1.08, -1.44,  2.10,  1.93,  0.37, -1.03,  0.21,  1.88, -1.53, -0.75],
+        idx30Data:[-2.18, -3.21,  0.99, -0.63,  0.43, -2.20, -1.12,  1.40,  3.39, -2.10, -1.92, -0.59, -0.03,  1.21],
+        ihsgData: [-1.65, -3.38,  1.39, -0.70, -0.37, -3.15, -1.64,  1.19,  2.67, -1.93, -0.94, -0.08, -0.62,  1.93],
       };
       const last = fb.labels.length - 1;
       setCards(fb.tclData[last], fb.ihsgData[last], fb.idx30Data[last]);
