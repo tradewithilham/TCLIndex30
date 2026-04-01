@@ -329,7 +329,7 @@
       // Google Apps Script relay — isi setelah setup, kosongkan jika belum
       // Setup: https://script.google.com → New Project → paste kode di bawah → Deploy as Web App
       // function doGet(e){var r=UrlFetchApp.fetch(e.parameter.url);return ContentService.createTextOutput(r.getContentText()).setMimeType(ContentService.MimeType.TEXT);}
-      appsScriptUrl: '',
+      appsScriptUrl: 'https://script.google.com/macros/s/AKfycbwbUarh-kTJTYIHSazF1fQjeSxISHHFR_n4u19OduT4Dsjo4YfC0VmGLp_knaQyD03m/exec',
 
       autoRefreshMs: 5 * 60 * 1000,
     };
@@ -586,19 +586,43 @@
 
     function parseCsvToChartData(text) {
       const rows = parseCSVRows(text);
-      const hdr  = rows[0].map(h => h.toUpperCase());
-      const iDate  = hdr.findIndex(h => h.includes('DATE'));
-      const iTCL   = hdr.findIndex(h => h === 'TCL');
-      const iIDX30 = hdr.findIndex(h => h.includes('IDX30'));
-      const iIHSG  = hdr.findIndex(h => h.includes('IHSG'));
-      if (iDate < 0 || iTCL < 0) return null;
 
-      const data = rows.slice(1).filter(r => r[iDate] && r[iTCL] && r[iTCL] !== '');
+      // Scan SEMUA baris untuk cari header — sheet ini punya banyak kolom kosong
+      // dan header bisa ada di baris mana saja, bukan selalu baris pertama
+      let hdrRowIdx = -1, iDate = -1, iTCL = -1, iIDX30 = -1, iIHSG = -1;
+
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i].map(h => h.toUpperCase().trim());
+        const d  = r.findIndex(h => h === 'DATE');
+        const t  = r.findIndex(h => h === 'TCL');
+        const i3 = r.findIndex(h => h.includes('IDX30'));
+        // IHSG bisa bernama IHSG atau Composite
+        const ih = r.findIndex(h => h.includes('IHSG') || h === 'COMPOSITE');
+        if (d >= 0 && t >= 0) {
+          hdrRowIdx = i; iDate = d; iTCL = t; iIDX30 = i3; iIHSG = ih;
+          break;
+        }
+      }
+
+      if (hdrRowIdx < 0 || iDate < 0 || iTCL < 0) return null;
+
+      // Ambil baris data setelah baris header
+      // Filter: kolom Date harus ada isi, kolom TCL harus ada angka
+      const pct = (r, i) => {
+        if (i < 0 || !r[i]) return 0;
+        return parseFloat(r[i].replace(/%/g, '').trim()) || 0;
+      };
+      const isValidDate = s => s && s.trim().length > 0 && /\d/.test(s);
+      const isValidPct  = s => s && s.trim().length > 0 && !isNaN(parseFloat(s.replace(/%/g,'')));
+
+      const data = rows.slice(hdrRowIdx + 1).filter(r =>
+        isValidDate(r[iDate]) && isValidPct(r[iTCL])
+      );
+
       if (!data.length) return null;
 
-      const pct = (r, i) => parseFloat((r[i] || '0').replace('%','')) || 0;
       return {
-        labels:    data.map(r => r[iDate]),
+        labels:    data.map(r => r[iDate].trim()),
         tclData:   data.map(r => pct(r, iTCL)),
         ihsgData:  data.map(r => pct(r, iIHSG)),
         idx30Data: data.map(r => pct(r, iIDX30)),
@@ -616,7 +640,7 @@
           const last = parsed.labels.length - 1;
           setCards(parsed.tclData[last], parsed.ihsgData[last], parsed.idx30Data[last]);
           drawChart(parsed.labels, parsed.tclData, parsed.ihsgData, parsed.idx30Data);
-          setChartStatus('live', `Live · ${parsed.labels.length} data points · ${fmtNow()}`);
+          setChartStatus('live', `Live (${result.src}) · ${parsed.labels.length} data points · ${fmtNow()}`);
           return;
         }
       }
