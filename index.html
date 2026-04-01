@@ -584,47 +584,56 @@
       });
     }
 
+    // Data chart dari Y3:AB18 — diupdate otomatis via Apps Script
+    // Format kolom: Date, TCL, IDX30, Composite(IHSG)
+    // Parser cari header yang mengandung Date+TCL, ambil max 20 baris setelahnya
+    // Filter ketat: Date harus format tanggal, TCL harus persen kecil (-20% s/d +20%)
     function parseCsvToChartData(text) {
       const rows = parseCSVRows(text);
 
-      // Scan SEMUA baris untuk cari header — sheet ini punya banyak kolom kosong
-      // dan header bisa ada di baris mana saja, bukan selalu baris pertama
-      let hdrRowIdx = -1, iDate = -1, iTCL = -1, iIDX30 = -1, iIHSG = -1;
+      let hdrRowIdx = -1, iDate = -1, iTCL = -1, iIDX30 = -1, iComp = -1;
 
+      // Scan semua baris cari header row persis
       for (let i = 0; i < rows.length; i++) {
-        const r = rows[i].map(h => h.toUpperCase().trim());
+        const r = rows[i].map(h => (h || '').toUpperCase().trim());
         const d  = r.findIndex(h => h === 'DATE');
         const t  = r.findIndex(h => h === 'TCL');
-        const i3 = r.findIndex(h => h.includes('IDX30'));
-        // IHSG bisa bernama IHSG atau Composite
-        const ih = r.findIndex(h => h.includes('IHSG') || h === 'COMPOSITE');
         if (d >= 0 && t >= 0) {
-          hdrRowIdx = i; iDate = d; iTCL = t; iIDX30 = i3; iIHSG = ih;
+          hdrRowIdx = i;
+          iDate = d;
+          iTCL  = t;
+          iIDX30 = r.findIndex(h => h.includes('IDX30') || h.includes('IDX 30'));
+          iComp  = r.findIndex(h => h.includes('COMPOSITE') || h.includes('IHSG'));
           break;
         }
       }
 
-      if (hdrRowIdx < 0 || iDate < 0 || iTCL < 0) return null;
+      if (hdrRowIdx < 0) return null;
 
-      // Ambil baris data setelah baris header
-      // Filter: kolom Date harus ada isi, kolom TCL harus ada angka
       const pct = (r, i) => {
-        if (i < 0 || !r[i]) return 0;
-        return parseFloat(r[i].replace(/%/g, '').trim()) || 0;
+        if (i < 0 || i >= r.length || !r[i]) return 0;
+        const n = parseFloat(r[i].replace(/%/g, '').trim());
+        return isNaN(n) ? 0 : n;
       };
-      const isValidDate = s => s && s.trim().length > 0 && /\d/.test(s);
-      const isValidPct  = s => s && s.trim().length > 0 && !isNaN(parseFloat(s.replace(/%/g,'')));
 
-      const data = rows.slice(hdrRowIdx + 1).filter(r =>
-        isValidDate(r[iDate]) && isValidPct(r[iTCL])
-      );
+      // Validasi baris: Date harus ada teks tanggal, TCL harus angka kecil (-50 s/d +50)
+      const isDateLike = s => s && s.trim().length > 3 && /[a-zA-Z]/.test(s) && /[0-9]/.test(s);
+      const isPctLike  = (r, i) => {
+        if (i < 0 || !r[i]) return false;
+        const n = parseFloat(r[i].replace(/%/g,'').trim());
+        return !isNaN(n) && Math.abs(n) <= 50;
+      };
+
+      const data = rows
+        .slice(hdrRowIdx + 1, hdrRowIdx + 30) // max 30 baris setelah header
+        .filter(r => isDateLike(r[iDate]) && isPctLike(r, iTCL));
 
       if (!data.length) return null;
 
       return {
         labels:    data.map(r => r[iDate].trim()),
         tclData:   data.map(r => pct(r, iTCL)),
-        ihsgData:  data.map(r => pct(r, iIHSG)),
+        ihsgData:  data.map(r => pct(r, iComp)),
         idx30Data: data.map(r => pct(r, iIDX30)),
       };
     }
@@ -645,12 +654,13 @@
         }
       }
 
-      // Fallback statis — data dari spreadsheet per 31 Mar 2026
+      // Fallback statis — data persis dari spreadsheet Y3:AB18 per 1 Apr 2026
+      // Date | TCL   | IDX30  | Composite(IHSG)
       const fb = {
-        labels:   ['4 Mar','5 Mar','6 Mar','9 Mar','10 Mar','11 Mar','12 Mar','13 Mar','16 Mar','17 Mar','25 Mar','26 Mar','27 Mar','30 Mar','31 Mar'],
-        tclData:  [-4.15, 2.53, -2.04, -1.72, 1.04, -2.30, 1.14, -1.42, 2.07, 1.91, 0.42, -1.00, 0.19, 1.40, -1.52],
-        ihsgData: [-0.97, -4.79, 1.73, -1.65, -3.38, 1.39, -0.70, -0.37, -3.15, -1.64, 1.19, 2.67, -1.93, -0.84, -0.94],
-        idx30Data:[-0.48, -4.10, 2.13, -2.18, -3.21, 0.99, -0.63, 0.43, -2.20, -1.12, 1.40, 3.39, -2.10, -1.92, -1.92],
+        labels:   ['5 Mar 2026','6 Mar 2026','9 Mar 2026','10 Mar 2026','11 Mar 2026','12 Mar 2026','13 Mar 2026','16 Mar 2026','17 Mar 2026','25 Mar 2026','26 Mar 2026','27 Mar 2026','30 Mar 2026','31 Mar 2026','1 Apr 2026'],
+        tclData:  [-2.06, -1.75, 1.08, -2.28, 1.08, -1.44, 2.10, 1.93, 0.37, -1.03, 0.21, 1.88, -1.53, -0.75, 0],
+        idx30Data:[-2.18, -3.21, 0.99, -0.63, 0.43, -2.20, -1.12, 1.40, 3.39, -2.10, -1.92, -0.59, -0.03, 1.21, 0],
+        ihsgData: [-1.65, -3.38, 1.39, -0.70, -0.37, -3.15, -1.64, 1.19, 2.67, -1.93, -0.94, -0.08, -0.62, 1.93, 0],
       };
       const last = fb.labels.length - 1;
       setCards(fb.tclData[last], fb.ihsgData[last], fb.idx30Data[last]);
