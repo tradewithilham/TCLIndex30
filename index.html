@@ -1,588 +1,90 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TCL Market 30 — The Chartist Lab | April 2026</title>
-  <meta name="description" content="30 saham pilihan The Chartist Lab berdasarkan analisis teknikal. Berlaku periode April 2026." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --gold: #C9A84C; --gold-light: #E8C97A; --gold-dim: #8A7040;
-      --black: #000000; --border: #1A1A1A; --border-mid: #252525;
-      --green: #4ADE80; --red: #F87171;
-    }
-    html { scroll-behavior: smooth; }
-    body { background: var(--black); color: #E8E0D0; font-family: 'Outfit', sans-serif; min-height: 100vh; }
-    .hdr { background: var(--black); border-bottom: 1px solid var(--border); padding: 2.5rem 3rem 2rem; position: relative; }
-    .hdr::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, #C9A84C44, transparent); }
-    .top-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1.5rem; }
-    .brand { display: flex; align-items: center; gap: 16px; }
-    .bubble { width: 48px; height: 48px; background: #0A0A0A; border: 1px solid #2A2A2A; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-    .brand-name { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 600; color: var(--gold-light); letter-spacing: 0.03em; line-height: 1.2; }
-    .brand-sub { font-size: 10px; letter-spacing: 0.14em; color: #999; text-transform: uppercase; font-family: 'DM Mono', monospace; margin-top: 3px; }
-    .ig-row { display: flex; gap: 8px; margin-top: 7px; flex-wrap: wrap; }
-    .ig-tag { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--gold-dim); letter-spacing: 0.06em; border: 1px solid #3A2A0A; padding: 3px 8px; }
-    .validity { text-align: right; font-family: 'DM Mono', monospace; font-size: 10px; color: #C0B89A; letter-spacing: 0.06em; line-height: 1.9; }
-    .validity span { color: var(--gold); display: block; font-size: 13px; letter-spacing: 0.04em; }
-    .idx-title { margin-top: 2rem; }
-    .idx-eyebrow { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6A5A2A; }
-    .idx-h { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 600; color: #fff; letter-spacing: 0.01em; line-height: 1.1; margin-top: 6px; }
-    .idx-h em { color: var(--gold); font-style: normal; }
-    .rule { width: 48px; height: 1px; background: #C9A84C33; margin: 12px 0; }
-    .idx-desc { font-size: 13px; color: #BBB; line-height: 1.65; max-width: 560px; }
-    .content { padding: 2rem 3rem 0; }
-    .perf-section { margin-bottom: 2rem; }
-    .perf-title { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #6A5A2A; margin-bottom: 1rem; }
-    .perf-wrap { border: 1px solid var(--border); background: #050505; padding: 1.5rem; }
-    .perf-card { padding: 8px 12px; border: 1px solid #1A1A1A; flex: 1; min-width: 80px; }
-    .perf-card-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
-    .perf-card-val { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
-    .perf-card-val.pos { color: #4ADE80; } .perf-card-val.neg { color: #F87171; } .perf-card-val.neu { color: #E8E0D0; }
-    .perf-result-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 3px 8px; display: inline-block; }
-    .perf-result-val.out { background: #4ADE80; color: #000; } .perf-result-val.under { background: #F87171; color: #000; }
-    .perf-legend { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
-    .perf-leg-item { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em; color: #666; }
-    .perf-leg-dot { width: 24px; height: 2px; flex-shrink: 0; }
-    .chart-status { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.06em; color: #555; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
-    .chart-status .cdot { width: 5px; height: 5px; border-radius: 50%; background: #555; }
-    .chart-status.clive .cdot { background: var(--green); box-shadow: 0 0 5px #4ADE8077; animation: blink 2s ease-in-out infinite; }
-    .chart-status.clive { color: #4ADE8088; }
-    .chart-status.cfallback .cdot { background: var(--gold); }
-    .chart-status.cfallback { color: #8A704088; }
-    .filter-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem; flex-wrap: wrap; }
-    .filter-label { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-dim); }
-    .sector-select { background: #080808; border: 1px solid var(--border-mid); color: var(--gold); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 30px 7px 12px; letter-spacing: 0.06em; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c9a84c' stroke-width='1.2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; transition: border-color 0.2s; }
-    .sector-select:hover { border-color: #C9A84C55; }
-    .counter { font-family: 'DM Mono', monospace; font-size: 10px; color: #C0B89A; margin-left: auto; }
-    .counter span { color: var(--gold); }
-    .data-status { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.06em; }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .status-dot.live { background: var(--green); box-shadow: 0 0 6px #4ADE8088; animation: blink 2s ease-in-out infinite; }
-    .status-dot.loading { background: #666; animation: blink 1s ease-in-out infinite; }
-    .status-dot.error { background: var(--red); }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    .status-text { color: #666; }
-    .status-text .highlight { color: #C0B89A; }
-    .status-text .live-label { color: var(--green); font-weight: 500; }
-    .status-text .error-label { color: var(--red); }
-    .tbl-wrap { border: 1px solid var(--border); overflow-x: auto; }
-    table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 620px; }
-    .tbl thead tr { background: #070707; border-bottom: 1px solid #1E1E1E; }
-    .tbl thead th { padding: 10px 16px; text-align: left; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: #6A5A2A; font-weight: 400; }
-    .tbl thead th.r { text-align: right; }
-    .tbl tbody tr { border-bottom: 1px solid #0F0F0F; transition: background 0.12s; }
-    .tbl tbody tr:hover { background: #0A0A0A; }
-    .tbl tbody tr:last-child { border-bottom: none; }
-    .tbl td { padding: 10px 16px; vertical-align: middle; }
-    .tbl td.r { text-align: right; }
-    .rank { font-family: 'DM Mono', monospace; font-size: 11px; color: #777; }
-    .ticker { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--gold-light); letter-spacing: 0.05em; }
-    .ename { font-size: 12px; color: #C0B89A; }
-    .stag { display: inline-flex; align-items: center; gap: 6px; }
-    .sdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .slbl { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
-    .price-val { font-family: 'DM Mono', monospace; font-size: 13px; color: #CCC; }
-    .chg-pos { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--green); font-weight: 500; }
-    .chg-neg { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--red); font-weight: 500; }
-    .chg-neu { font-family: 'DM Mono', monospace; font-size: 12px; color: #E8E0D0; }
-    .loading-state { padding: 3rem 0; text-align: center; font-family: 'DM Mono', monospace; font-size: 11px; color: #666; letter-spacing: 0.1em; }
-    .loading-dot { display: inline-block; animation: pulse 1.4s ease-in-out infinite; }
-    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes pulse { 0%,80%,100%{opacity:0.2} 40%{opacity:1} }
-    .error-state { padding: 2rem; text-align: center; font-family: 'DM Mono', monospace; font-size: 11px; color: #F87171; letter-spacing: 0.08em; border: 1px solid #2A1010; background: #0A0505; }
-    .foot { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .foot-note { font-size: 10px; color: #777; font-family: 'DM Mono', monospace; letter-spacing: 0.04em; }
-    .wm { font-family: 'DM Mono', monospace; font-size: 9px; color: #666; letter-spacing: 0.12em; text-transform: uppercase; }
-    .refresh-btn { font-family: 'DM Mono', monospace; font-size: 9px; color: #666; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid #1E1E1E; padding: 4px 10px; background: transparent; cursor: pointer; transition: color 0.15s, border-color 0.15s; }
-    .refresh-btn:hover { color: var(--gold); border-color: #3A2A0A; }
-    .cta-section { margin: 2.5rem 3rem 0; border: 1px solid #1E1700; background: #080600; padding: 2rem 2.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem; position: relative; overflow: hidden; }
-    .cta-section::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--gold); }
-    .cta-eyebrow { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: #7A6A2A; margin-bottom: 10px; }
-    .cta-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: var(--gold-light); line-height: 1.3; margin-bottom: 8px; }
-    .cta-desc { font-size: 13px; color: #C0B89A; line-height: 1.65; max-width: 440px; }
-    .cta-right { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
-    .cta-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--gold); color: #000; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 24px; border: none; cursor: pointer; text-decoration: none; transition: background 0.15s; }
-    .cta-btn:hover { background: var(--gold-light); }
-    .cta-ig { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-    .cta-ig-tag { font-family: 'DM Mono', monospace; font-size: 10px; color: #7A6A2A; border: 1px solid #2A1F08; padding: 6px 12px; letter-spacing: 0.04em; text-decoration: none; transition: border-color 0.15s, color 0.15s; }
-    .cta-ig-tag:hover { border-color: #C9A84C55; color: var(--gold); }
-    .global-foot { margin: 2.5rem 3rem 0; padding: 1.5rem 0 2rem; border-top: 1px solid #111; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    .gf-brand { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: #777; letter-spacing: 0.04em; }
-    .gf-note { font-family: 'DM Mono', monospace; font-size: 10px; color: #666; letter-spacing: 0.06em; text-align: right; line-height: 1.7; }
-    @media (max-width: 640px) {
-      .hdr { padding: 1.5rem 1.25rem; }
-      .content { padding: 1.5rem 1.25rem 0; }
-      .cta-section { margin: 1.5rem 1.25rem 0; padding: 1.5rem 1.25rem; }
-      .global-foot { margin: 1.5rem 1.25rem 0; }
-      .idx-h { font-size: 34px; }
-      .cta-right { align-items: flex-start; }
-      .gf-note { text-align: left; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCL Performance Chart</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+  background:#000;
+  color:#E8E0D0;
+  font-family:Arial, sans-serif;
+  padding:20px;
+}
+.container {
+  max-width:900px;
+  margin:auto;
+}
+h1 {
+  text-align:center;
+  color:#C9A84C;
+}
+</style>
 </head>
 <body>
+<div class="container">
+  <h1>TCL vs IHSG vs IDX30</h1>
+  <canvas id="chart"></canvas>
+</div>
 
-<header class="hdr">
-  <div class="top-row">
-    <div class="brand">
-      <div class="bubble">🫧</div>
-      <div>
-        <div class="brand-name">The Chartist Lab</div>
-        <div class="brand-sub">Premium Market Intelligence</div>
-        <div class="ig-row">
-          <span class="ig-tag">@thechartistlab</span>
-          <span class="ig-tag">@iamthechartist</span>
-        </div>
-      </div>
-    </div>
-    <div class="validity">
-      <div>Masa Berlaku</div>
-      <span>1 – 30 April 2026</span>
-    </div>
-  </div>
-  <div class="idx-title">
-    <div class="idx-eyebrow">Watchlist Resmi · Pilihan Teknikal</div>
-    <div class="idx-h">TCL Market <em>30</em></div>
-    <div class="rule"></div>
-    <div class="idx-desc">30 saham pilihan The Chartist Lab berdasarkan analisis teknikal. Berlaku periode April 2026.</div>
-  </div>
-</header>
-
-<main class="content">
-
-  <div class="perf-section">
-    <div class="perf-title">— Performa Index · TCL vs Composite/IHSG vs IDX30</div>
-    <div class="perf-wrap">
-      <div style="position:relative;width:100%;min-height:260px;">
-        <canvas id="perfChart" style="width:100%;"></canvas>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin-top:1rem;">
-        <div class="perf-card">
-          <div class="perf-card-label" style="color:#4A9EFF;">TCL</div>
-          <div class="perf-card-val" id="tcl-val">—</div>
-        </div>
-        <div class="perf-card">
-          <div class="perf-card-label" style="color:#F5C518;">Composite/IHSG</div>
-          <div class="perf-card-val" id="ihsg-val">—</div>
-        </div>
-        <div class="perf-card">
-          <div class="perf-card-label" style="color:#F87171;">IDX30</div>
-          <div class="perf-card-val" id="idx30-val">—</div>
-        </div>
-        <div class="perf-card" style="flex:2;min-width:130px;">
-          <div class="perf-card-label" style="color:#fff;">TCL Result</div>
-          <div class="perf-result-val" id="tcl-result">—</div>
-        </div>
-      </div>
-      <div class="perf-legend">
-        <div class="perf-leg-item"><div class="perf-leg-dot" style="background:#4A9EFF"></div>The Chartist Lab</div>
-        <div class="perf-leg-item"><div class="perf-leg-dot" style="background:#F5C518"></div>Composite/IHSG</div>
-        <div class="perf-leg-item"><div class="perf-leg-dot" style="background:#F87171"></div>IDX30</div>
-      </div>
-      <div class="chart-status" id="chart-status">
-        <div class="cdot"></div>
-        <span id="chart-status-text">Memuat chart...</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="filter-bar">
-    <div class="filter-label">Filter Sektor</div>
-    <select class="sector-select" id="sf" onchange="filterStocks()">
-      <option value="all">Semua Sektor</option>
-      <option value="Energy">Energy</option>
-      <option value="Finance">Finance</option>
-      <option value="Property">Property</option>
-      <option value="Consumer">Consumer</option>
-      <option value="Infrastructure">Infrastructure</option>
-      <option value="Mining">Mining</option>
-      <option value="Plantation">Plantation</option>
-    </select>
-    <div class="counter">Menampilkan <span id="cnt">—</span> saham</div>
-  </div>
-
-  <div class="data-status">
-    <div class="status-dot loading" id="status-dot"></div>
-    <div class="status-text" id="status-text">Memuat data dari Google Sheets...</div>
-  </div>
-
-  <div class="tbl-wrap">
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th style="width:40px">#</th>
-          <th style="width:80px">Ticker</th>
-          <th>Nama Emiten</th>
-          <th style="width:110px">Sektor</th>
-          <th class="r" style="width:100px">Current Price</th>
-          <th class="r" style="width:80px">% Chg</th>
-        </tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="6"><div class="loading-state">Memuat data<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="foot">
-    <div class="foot-note">© 2026 The Chartist Lab — Bukan rekomendasi investasi.</div>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
-      <div class="wm">TCL · April 2026</div>
-    </div>
-  </div>
-</main>
-
-<section class="cta-section">
-  <div class="cta-left">
-    <div class="cta-eyebrow">Private Group · The Chartist Lab</div>
-    <div class="cta-title">Mau analisis lebih dalam?<br>Gabung Private Group kami.</div>
-    <div class="cta-desc">Dapatkan akses ke <b>watchlist eksklusif</b>, analisis teknikal harian, dan diskusi langsung bersama komunitas trader The Chartist Lab. DM Instagram kami untuk info lebih lanjut.</div>
-  </div>
-  <div class="cta-right">
-    <a href="https://instagram.com/thechartistlab" target="_blank" rel="noopener" class="cta-btn">DM untuk Gabung ↗</a>
-    <div class="cta-ig">
-      <a href="https://instagram.com/thechartistlab" target="_blank" rel="noopener" class="cta-ig-tag">@thechartistlab</a>
-      <a href="https://instagram.com/iamthechartist" target="_blank" rel="noopener" class="cta-ig-tag">@iamthechartist</a>
-    </div>
-  </div>
-</section>
-
-<footer class="global-foot">
-  <div class="gf-brand">The Chartist Lab 🫧</div>
-  <div class="gf-note">
-    <div>instagram: @thechartistlab · @iamthechartist</div>
-    <div>bukan rekomendasi investasi — april 2026</div>
-  </div>
-</footer>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
-// ═══════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════
-const CONFIG = {
-  stockCsvUrl:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vSWYVvomntKZBSAotDDoT3twaLucmcj1tagUmVi1Ez140GSzzQfsQd3OlwJpfQEgWwzcSEg8a0gf_rG/pub?gid=0&single=true&output=csv',
-  chartCsvUrl:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQIlMotS8qp9BLz1PWkIbrqXA7kiEOfrL04wda_JSEDMpxgzD7S0eIznIfmKCI3Bb2Ec51xHJM4Mvyr/pub?gid=0&single=true&output=csv',
-  appsScriptUrl:  'https://script.google.com/macros/s/AKfycbwbUarh-kTJTYIHSazF1fQjeSxISHHFR_n4u19OduT4Dsjo4YfC0VmGLp_knaQyD03m/exec',
-  proxies: [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ],
-  autoRefreshMs: 5 * 60 * 1000,
-};
+const labels = [
+'6 Mar','9 Mar','10 Mar','11 Mar','12 Mar','13 Mar',
+'16 Mar','17 Mar','25 Mar','26 Mar','27 Mar','30 Mar','31 Mar','1 Apr'
+];
 
-const SECTOR_COLORS = {
-  Energy:'#E8A84C', Finance:'#7BA7D4', Property:'#F09B6A',
-  Consumer:'#70C98A', Infrastructure:'#94A3B8', Mining:'#C084FC', Plantation:'#4ADE80'
-};
-const TICKER_SECTOR = {
-  AADI:'Mining',ADMR:'Mining',ADRO:'Mining',
-  AKRA:'Energy',ELSA:'Energy',ENRG:'Energy',ESSA:'Energy',MEDC:'Energy',OILS:'Energy',
-  BBNI:'Finance',BBTN:'Finance',BRIS:'Finance',SRTG:'Finance',
-  APLN:'Property',KIJA:'Property',
-  DGWG:'Consumer',EMAS:'Consumer',MINA:'Consumer',WMUU:'Consumer',
-  HUMI:'Infrastructure',INKP:'Infrastructure',MSJA:'Infrastructure',SOCI:'Infrastructure',
-  LSIP:'Plantation',NSSS:'Plantation',SIMP:'Plantation',TAPG:'Plantation',
-  PTBA:'Mining',TINS:'Mining',UNTR:'Mining',
-};
+const tcl = [-2.06,-1.75,1.08,-2.28,1.08,-1.44,2.10,1.93,0.37,-1.03,0.21,1.88,-1.53,-0.75];
+const idx30 = [-2.18,-3.21,0.99,-0.63,0.43,-2.20,-1.12,1.40,3.39,-2.10,-1.92,-0.59,-0.03,1.21];
+const ihsg = [-1.65,-3.38,1.39,-0.70,-0.37,-3.15,-1.64,1.19,2.67,-1.93,-0.94,-0.08,-0.62,1.93];
 
-let allData=[], currentFilter='all', chartInstance=null;
+const ctx = document.getElementById('chart').getContext('2d');
 
-// ═══════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════
-function fmtNow() {
-  const n = new Date();
-  return n.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})
-    +' '+n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-}
-function setTableStatus(type,html) {
-  document.getElementById('status-dot').className='status-dot '+type;
-  document.getElementById('status-text').innerHTML=html;
-}
-function setChartStatus(type,msg) {
-  const el=document.getElementById('chart-status');
-  el.className='chart-status'+(type==='live'?' clive':type==='fallback'?' cfallback':'');
-  document.getElementById('chart-status-text').textContent=msg;
-}
-async function fetchFresh(url,ms=9000) {
-  const bust=url+(url.includes('?')?'&':'?')+'_t='+Date.now();
-  const ctrl=new AbortController();
-  const t=setTimeout(()=>ctrl.abort(),ms);
-  try { const r=await fetch(bust,{cache:'no-store',signal:ctrl.signal}); clearTimeout(t); return r; }
-  catch(e) { clearTimeout(t); throw e; }
-}
-async function fetchCSV(csvUrl) {
-  if (CONFIG.appsScriptUrl) {
-    try {
-      const r=await fetchFresh(`${CONFIG.appsScriptUrl}?url=${encodeURIComponent(csvUrl)}`,10000);
-      if(r.ok){const t=await r.text();if(t&&t.length>30)return{text:t,src:'Apps Script'};}
-    } catch(e){}
-  }
-  try {
-    const r=await fetchFresh(csvUrl,7000);
-    if(r.ok){const t=await r.text();if(t&&t.length>30)return{text:t,src:'direct'};}
-  } catch(e){}
-  for(const mkP of CONFIG.proxies){
-    try{
-      const r=await fetchFresh(mkP(csvUrl),9000);
-      if(!r.ok)continue;
-      const t=await r.text();
-      if(t&&t.length>30)return{text:t,src:'proxy'};
-    }catch(e){continue;}
-  }
-  return null;
-}
-function parseCSVRows(text) {
-  return text.trim().replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').map(line=>{
-    const vals=[];let cur='',inQ=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'){inQ=!inQ;}
-      else if(ch===','&&!inQ){vals.push(cur.trim());cur='';}
-      else{cur+=ch;}
-    }
-    vals.push(cur.trim());
-    return vals;
-  });
-}
-
-// ═══════════════════════════════════════════
-// PARSE CHART CSV
-// Sheet bersih: A=Date, B=TCL, C=IDX30, D=Composite/IHSG
-// Header ada di baris 7 (index 6), data di baris 8-19 (index 7-18)
-// ═══════════════════════════════════════════
-function parseCsvToChartData(text) {
-  const rows = parseCSVRows(text);
-
-  // Cari baris header yang mengandung DATE dan TCL
-  let hdrIdx = -1;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i].map(h => (h||'').toUpperCase().trim());
-    if (r.includes('DATE') && r.includes('TCL')) {
-      hdrIdx = i;
-      break;
-    }
-  }
-  if (hdrIdx < 0) return null;
-
-  const hdr    = rows[hdrIdx].map(h => (h||'').toUpperCase().trim());
-  const iDate  = hdr.indexOf('DATE');
-  const iTCL   = hdr.indexOf('TCL');
-  const iIDX   = hdr.findIndex(h => h.includes('IDX30'));
-  const iComp  = hdr.findIndex(h => h.includes('COMPOSITE') || h.includes('IHSG'));
-
-  if (iDate < 0 || iTCL < 0) return null;
-
-  const pct = (r,i) => {
-    if(i<0||!r[i])return 0;
-    const n=parseFloat(r[i].replace(/%/g,'').trim());
-    return isNaN(n)?0:n;
-  };
-
-  // Filter ketat: Date harus teks tanggal, TCL harus angka -50 s/d +50
-  const data = rows.slice(hdrIdx+1).filter(r => {
-    if(!r[iDate]||r[iDate].trim().length<3)return false;
-    const v=parseFloat((r[iTCL]||'').replace(/%/g,'').trim());
-    return !isNaN(v) && Math.abs(v)<=50 && r[iTCL].trim()!=='';
-  });
-
-  if (!data.length) return null;
-
-  return {
-    labels:    data.map(r => r[iDate].trim()),
-    tclData:   data.map(r => pct(r,iTCL)),
-    idx30Data: data.map(r => pct(r,iIDX)),
-    ihsgData:  data.map(r => pct(r,iComp)),
-  };
-}
-
-// ═══════════════════════════════════════════
-// CHART RENDER
-// ═══════════════════════════════════════════
-function setCards(tcl,ihsg,idx30) {
-  [['tcl-val',tcl],['ihsg-val',ihsg],['idx30-val',idx30]].forEach(([id,v])=>{
-    const n=parseFloat(v);
-    const cls=n>0?'pos':n<0?'neg':'neu';
-    document.getElementById(id).innerHTML=`<span class="${cls}">${n>0?'+':''}${n.toFixed(2)}%</span>`;
-  });
-  const isOut=parseFloat(tcl)>parseFloat(ihsg)&&parseFloat(tcl)>parseFloat(idx30);
-  const el=document.getElementById('tcl-result');
-  el.textContent=isOut?'OUTPERFORM':'UNDERPERFORM';
-  el.className='perf-result-val '+(isOut?'out':'under');
-}
-
-function drawChart(labels,tclData,ihsgData,idx30Data) {
-  if(chartInstance){chartInstance.destroy();chartInstance=null;}
-  const canvas=document.getElementById('perfChart');
-  canvas.height=window.innerWidth<640?200:300;
-  Chart.register(ChartDataLabels);
-  const mob=window.innerWidth<640;
-  const ds=(label,data,color,align)=>({
-    label,data,borderColor:color,borderWidth:2,
-    pointRadius:3,pointBackgroundColor:color,tension:0.4,fill:false,
-    datalabels:{color,anchor:'end',align,offset:2,
-      font:{family:'DM Mono',size:mob?6:9,weight:'500'},
-      formatter:v=>(v>0?'+':'')+v.toFixed(2)+'%'}
-  });
-  chartInstance=new Chart(canvas.getContext('2d'),{
-    type:'line',
-    data:{labels,datasets:[
-      ds('The Chartist Lab',tclData,'#4A9EFF','top'),
-      ds('Composite/IHSG',ihsgData,'#F5C518','bottom'),
-      ds('IDX30',idx30Data,'#F87171','bottom'),
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        datalabels:{display:true},
-        tooltip:{
-          backgroundColor:'#0D0D0D',borderColor:'#2A2A2A',borderWidth:1,
-          titleColor:'#888',bodyColor:'#CCC',
-          titleFont:{family:'DM Mono',size:10},bodyFont:{family:'DM Mono',size:11},
-          callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y>0?'+':''}${c.parsed.y.toFixed(2)}%`}
-        }
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: 'TCL',
+        data: tcl,
+        borderColor: '#4A9EFF',
+        tension: 0.4
       },
-      scales:{
-        x:{ticks:{color:'#BBB',font:{family:'DM Mono',size:9},maxTicksLimit:mob?5:12,maxRotation:45},grid:{color:'#1A1A1A'}},
-        y:{ticks:{color:'#BBB',font:{family:'DM Mono',size:9},callback:v=>v.toFixed(1)+'%'},grid:{color:'#1A1A1A'}}
+      {
+        label: 'IHSG',
+        data: ihsg,
+        borderColor: '#F5C518',
+        tension: 0.4
+      },
+      {
+        label: 'IDX30',
+        data: idx30,
+        borderColor: '#F87171',
+        tension: 0.4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: { color: '#E8E0D0' }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#E8E0D0' }
+      },
+      y: {
+        ticks: {
+          color: '#E8E0D0',
+          callback: value => value + '%'
+        }
       }
     }
-  });
-}
-
-// ═══════════════════════════════════════════
-// LOAD CHART
-// ═══════════════════════════════════════════
-async function loadChart() {
-  setChartStatus('','Memuat chart...');
-  const result = await fetchCSV(CONFIG.chartCsvUrl);
-
-  if (result) {
-    const parsed = parseCsvToChartData(result.text);
-    if (parsed && parsed.labels.length > 0) {
-      const last = parsed.labels.length-1;
-      setCards(parsed.tclData[last], parsed.ihsgData[last], parsed.idx30Data[last]);
-      drawChart(parsed.labels, parsed.tclData, parsed.ihsgData, parsed.idx30Data);
-      setChartStatus('live',`Live (${result.src}) · ${parsed.labels.length} data points · ${fmtNow()}`);
-      return;
-    }
   }
-
-  // Fallback — data dari A7:D19 per 1 Apr 2026
-  // A=Date | B=TCL | C=IDX30 | D=Composite/IHSG
-  const fb = {
-    labels:   ['6 Mar 2026','9 Mar 2026','10 Mar 2026','11 Mar 2026','12 Mar 2026','13 Mar 2026','16 Mar 2026','17 Mar 2026','25 Mar 2026','26 Mar 2026','27 Mar 2026','30 Mar 2026','31 Mar 2026','1 Apr 2026'],
-    tclData:  [-2.06,-1.75, 1.08,-2.28, 1.08,-1.44, 2.10, 1.93, 0.37,-1.03, 0.21, 1.88,-1.53,-0.75],
-    idx30Data:[-2.18,-3.21, 0.99,-0.63, 0.43,-2.20,-1.12, 1.40, 3.39,-2.10,-1.92,-0.59,-0.03, 1.21],
-    ihsgData: [-1.65,-3.38, 1.39,-0.70,-0.37,-3.15,-1.64, 1.19, 2.67,-1.93,-0.94,-0.08,-0.62, 1.93],
-  };
-  const last=fb.labels.length-1;
-  setCards(fb.tclData[last],fb.ihsgData[last],fb.idx30Data[last]);
-  drawChart(fb.labels,fb.tclData,fb.ihsgData,fb.idx30Data);
-  setChartStatus('fallback','Fallback data · Live fetch tidak tersedia · Update manual: 1 Apr 2026');
-}
-
-// ═══════════════════════════════════════════
-// FORMAT HELPERS
-// ═══════════════════════════════════════════
-function fmtPrice(v) {
-  if(!v||v==='-')return '<span style="color:#444;font-family:\'DM Mono\',monospace">—</span>';
-  const n=parseFloat(v.replace(/,/g,''));
-  if(isNaN(n))return '<span style="color:#444;font-family:\'DM Mono\',monospace">—</span>';
-  return `<span class="price-val">${n.toLocaleString('id-ID')}</span>`;
-}
-function fmtChg(v) {
-  if(!v||v==='-')return '<span style="color:#444;font-family:\'DM Mono\',monospace">—</span>';
-  const n=parseFloat(v.replace('%','').trim());
-  if(isNaN(n))return '<span style="color:#444;font-family:\'DM Mono\',monospace">—</span>';
-  const cls=n>0?'chg-pos':n<0?'chg-neg':'chg-neu';
-  return `<span class="${cls}">${n>0?'+':''}${n.toFixed(2)}%</span>`;
-}
-
-// ═══════════════════════════════════════════
-// TABLE
-// ═══════════════════════════════════════════
-function renderStocks(list) {
-  const tb=document.getElementById('tbody');
-  document.getElementById('cnt').textContent=list.length;
-  if(!list.length){
-    tb.innerHTML=`<tr><td colspan="6"><div class="loading-state">Tidak ada data untuk sektor ini.</div></td></tr>`;
-    return;
-  }
-  tb.innerHTML=list.map((s,i)=>{
-    const col=SECTOR_COLORS[s.sector]||'#777';
-    return `<tr>
-      <td class="rank">${String(i+1).padStart(2,'0')}</td>
-      <td><span class="ticker">${s.ticker}</span></td>
-      <td><span class="ename">${s.name}</span></td>
-      <td><span class="stag"><span class="sdot" style="background:${col}"></span><span class="slbl" style="color:${col}">${s.sector}</span></span></td>
-      <td class="r">${fmtPrice(s.price)}</td>
-      <td class="r">${fmtChg(s.chg)}</td>
-    </tr>`;
-  }).join('');
-}
-function filterStocks() {
-  currentFilter=document.getElementById('sf').value;
-  renderStocks(currentFilter==='all'?allData:allData.filter(s=>s.sector===currentFilter));
-}
-
-async function loadData() {
-  document.getElementById('tbody').innerHTML=`<tr><td colspan="6"><div class="loading-state">Memuat data<span class="loading-dot">.</span><span class="loading-dot">.</span><span class="loading-dot">.</span></div></td></tr>`;
-  setTableStatus('loading','Menghubungi Google Sheets...');
-  const result=await fetchCSV(CONFIG.stockCsvUrl);
-  if(!result){
-    document.getElementById('tbody').innerHTML=`<tr><td colspan="6"><div class="error-state">Gagal memuat data. Klik ↻ Refresh untuk coba lagi.</div></td></tr>`;
-    document.getElementById('cnt').textContent='—';
-    setTableStatus('error','<span class="error-label">✕ Gagal memuat</span> — semua sumber tidak tersedia');
-    return;
-  }
-  try {
-    const rows=parseCSVRows(result.text);
-    const hdr=rows[0].map(h=>h.toLowerCase());
-    const iT=hdr.findIndex(h=>h.includes('ticker'));
-    const iN=hdr.findIndex(h=>h==='name'||h.includes('nama'));
-    const iS=hdr.findIndex(h=>h.includes('sector')||h.includes('sektor'));
-    const iP=hdr.findIndex(h=>h==='price'||h==='harga'||h.includes('current'));
-    const iC=hdr.findIndex(h=>h.includes('chg')||h.includes('change'));
-    const get=(r,i)=>(i>=0&&r[i]!=null)?r[i]:'';
-    allData=rows.slice(1)
-      .map(r=>({
-        ticker:get(r,iT).toUpperCase(),
-        name:get(r,iN),
-        sector:get(r,iS)||TICKER_SECTOR[get(r,iT).toUpperCase()]||'',
-        price:get(r,iP),
-        chg:get(r,iC),
-      }))
-      .filter(r=>r.ticker&&r.ticker.length>0);
-    if(!allData.length)throw new Error('Tidak ada baris data valid');
-    filterStocks();
-    setTableStatus('live',
-      `<span class="live-label">● LIVE</span> — ${allData.length} saham dari Google Sheets · dimuat: <span class="highlight">${fmtNow()}</span>`
-    );
-  } catch(err) {
-    document.getElementById('tbody').innerHTML=`<tr><td colspan="6"><div class="error-state">Data diterima tapi gagal diproses. Klik ↻ Refresh.</div></td></tr>`;
-    setTableStatus('error',`<span class="error-label">✕ Parse error</span> — ${err.message}`);
-  }
-}
-
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
-function refreshAll(){loadData();loadChart();}
-if(CONFIG.autoRefreshMs>0)setInterval(refreshAll,CONFIG.autoRefreshMs);
-loadData();
-loadChart();
+});
 </script>
 </body>
 </html>
