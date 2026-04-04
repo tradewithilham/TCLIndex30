@@ -357,38 +357,31 @@ function parseCSVRows(text) {
 
 // ═══════════════════════════════════════════
 // PARSE CHART CSV
-// Sheet bersih: A=Date, B=TCL, C=IDX30, D=Composite/IHSG
-// Header ada di baris 7 (index 6), data di baris 8-19 (index 7-18)
+// Sheet: A=Date, B=TCL, C=IDX30, D=Composite
+// Header di baris yang mengandung DATE+TCL
 // ═══════════════════════════════════════════
 function parseCsvToChartData(text) {
   const rows = parseCSVRows(text);
-
-  // Cari baris header yang mengandung DATE dan TCL
   let hdrIdx = -1;
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i].map(h => (h||'').toUpperCase().trim());
-    if (r.includes('DATE') && r.includes('TCL')) {
-      hdrIdx = i;
-      break;
-    }
+    if (r.includes('DATE') && r.includes('TCL')) { hdrIdx = i; break; }
   }
   if (hdrIdx < 0) return null;
 
-  const hdr    = rows[hdrIdx].map(h => (h||'').toUpperCase().trim());
-  const iDate  = hdr.indexOf('DATE');
-  const iTCL   = hdr.indexOf('TCL');
-  const iIDX   = hdr.findIndex(h => h.includes('IDX30'));
-  const iComp  = hdr.findIndex(h => h.includes('COMPOSITE') || h.includes('IHSG'));
-
+  const hdr   = rows[hdrIdx].map(h => (h||'').toUpperCase().trim());
+  const iDate = hdr.indexOf('DATE');
+  const iTCL  = hdr.indexOf('TCL');
+  const iIDX  = hdr.findIndex(h => h.includes('IDX30'));
+  const iComp = hdr.findIndex(h => h.includes('COMPOSITE') || h.includes('IHSG'));
   if (iDate < 0 || iTCL < 0) return null;
 
   const pct = (r,i) => {
-    if(i<0||!r[i])return 0;
+    if(i<0||!r[i])return null;
     const n=parseFloat(r[i].replace(/%/g,'').trim());
-    return isNaN(n)?0:n;
+    return isNaN(n)?null:n;
   };
 
-  // Filter ketat: Date harus teks tanggal, TCL harus angka -50 s/d +50
   const data = rows.slice(hdrIdx+1).filter(r => {
     if(!r[iDate]||r[iDate].trim().length<3)return false;
     const v=parseFloat((r[iTCL]||'').replace(/%/g,'').trim());
@@ -406,58 +399,161 @@ function parseCsvToChartData(text) {
 }
 
 // ═══════════════════════════════════════════
-// CHART RENDER
+// CARDS — tampilkan nilai hari terakhir (daily %)
 // ═══════════════════════════════════════════
-function setCards(tcl,ihsg,idx30) {
+function setCards(tcl, ihsg, idx30) {
   [['tcl-val',tcl],['ihsg-val',ihsg],['idx30-val',idx30]].forEach(([id,v])=>{
-    const n=parseFloat(v);
-    const cls=n>0?'pos':n<0?'neg':'neu';
-    document.getElementById(id).innerHTML=`<span class="${cls}">${n>0?'+':''}${n.toFixed(2)}%</span>`;
+    const n = parseFloat(v);
+    if (isNaN(n)) { document.getElementById(id).innerHTML='<span class="neu">—</span>'; return; }
+    const cls = n>0?'pos':n<0?'neg':'neu';
+    document.getElementById(id).innerHTML = `<span class="${cls}">${n>0?'+':''}${n.toFixed(2)}%</span>`;
   });
-  const isOut=parseFloat(tcl)>parseFloat(ihsg)&&parseFloat(tcl)>parseFloat(idx30);
-  const el=document.getElementById('tcl-result');
-  el.textContent=isOut?'OUTPERFORM':'UNDERPERFORM';
-  el.className='perf-result-val '+(isOut?'out':'under');
+  const t=parseFloat(tcl), h=parseFloat(ihsg), i=parseFloat(idx30);
+  const isOut = t > h && t > i;
+  const el = document.getElementById('tcl-result');
+  el.textContent = isOut ? 'OUTPERFORM' : 'UNDERPERFORM';
+  el.className = 'perf-result-val '+(isOut?'out':'under');
 }
 
-function drawChart(labels,tclData,ihsgData,idx30Data) {
-  if(chartInstance){chartInstance.destroy();chartInstance=null;}
-  const canvas=document.getElementById('perfChart');
-  canvas.height=window.innerWidth<640?200:300;
+// ═══════════════════════════════════════════
+// CHART — daily return, label tiap titik
+// ═══════════════════════════════════════════
+function drawChart(labels, tclData, ihsgData, idx30Data) {
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  const canvas = document.getElementById('perfChart');
+  const mob = window.innerWidth < 640;
+  canvas.height = mob ? 260 : 380;
   Chart.register(ChartDataLabels);
-  const mob=window.innerWidth<640;
-  const ds=(label,data,color,align)=>({
-    label,data,borderColor:color,borderWidth:2,
-    pointRadius:3,pointBackgroundColor:color,tension:0.4,fill:false,
-    datalabels:{color,anchor:'end',align,offset:2,
-      font:{family:'DM Mono',size:mob?6:9,weight:'500'},
-      formatter:v=>(v>0?'+':'')+v.toFixed(2)+'%'}
+
+  // Shorten date labels: "11 Mar 2026" → "11 Mar"
+  const shortLabels = labels.map(l => {
+    const m = l.match(/(\d{1,2})\s(\w{3})/);
+    return m ? m[1]+' '+m[2] : l;
   });
-  chartInstance=new Chart(canvas.getContext('2d'),{
-    type:'line',
-    data:{labels,datasets:[
-      ds('The Chartist Lab',tclData,'#4A9EFF','top'),
-      ds('Composite/IHSG',ihsgData,'#F5C518','bottom'),
-      ds('IDX30',idx30Data,'#F87171','bottom'),
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        datalabels:{display:true},
-        tooltip:{
-          backgroundColor:'#0D0D0D',borderColor:'#2A2A2A',borderWidth:1,
-          titleColor:'#888',bodyColor:'#CCC',
-          titleFont:{family:'DM Mono',size:10},bodyFont:{family:'DM Mono',size:11},
-          callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y>0?'+':''}${c.parsed.y.toFixed(2)}%`}
+
+  function makeDataset(label, data, color, labelAlign) {
+    return {
+      label,
+      data,
+      borderColor: color,
+      borderWidth: 2,
+      pointRadius: mob ? 3 : 5,
+      pointHoverRadius: mob ? 5 : 7,
+      pointBackgroundColor: color,
+      pointBorderColor: '#000',
+      pointBorderWidth: 1.5,
+      tension: 0.5,
+      fill: false,
+      cubicInterpolationMode: 'monotone',
+      datalabels: {
+        display: true,
+        color: color,
+        font: { family: 'DM Mono, monospace', size: mob ? 7 : 9, weight: '400' },
+        formatter: v => v == null ? '' : (v > 0 ? '+' : '') + v.toFixed(2) + '%',
+        anchor: 'end',
+        align: labelAlign,
+        offset: mob ? 3 : 5,
+        // avoid null
+        filter: ctx => ctx.dataset.data[ctx.dataIndex] != null,
+      }
+    };
+  }
+
+  // Stagger label positions to reduce overlap
+  // TCL: top, IDX30: bottom, Composite: left/right alternating
+  const ihsgAligns = ihsgData.map((v, i) => {
+    if (v == null) return 'top';
+    const t = tclData[i], id = idx30Data[i];
+    // if composite is close to idx30, push opposite
+    if (id != null && Math.abs(v - id) < 0.5) return 'left';
+    return v > 0 ? 'top' : 'bottom';
+  });
+
+  // Zero baseline plugin
+  const zeroLinePlugin = {
+    id: 'zeroLine',
+    afterDraw(chart) {
+      const { ctx, scales: { x, y } } = chart;
+      const yZero = y.getPixelForValue(0);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x.left, yZero);
+      ctx.lineTo(x.right, yZero);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '9px DM Mono, monospace';
+      ctx.fillText('0.00%', x.left - 2, yZero - 4);
+      ctx.restore();
+    }
+  };
+
+  chartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: shortLabels,
+      datasets: [
+        makeDataset('TCL',              tclData,   '#4A9EFF', 'top'),
+        makeDataset('IDX30',            idx30Data, '#F87171', 'bottom'),
+        makeDataset('Composite/IHSG',   ihsgData,  '#F5C518', ihsgAligns),
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: mob?28:36, right: mob?20:28, bottom: 8, left: mob?28:36 } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        datalabels: { display: true },
+        tooltip: {
+          backgroundColor: '#0D0D0D',
+          borderColor: '#2A2A2A',
+          borderWidth: 1,
+          titleColor: '#999',
+          bodyColor: '#DDD',
+          titleFont: { family: 'DM Mono', size: 10 },
+          bodyFont: { family: 'DM Mono', size: 11 },
+          callbacks: {
+            label: c => {
+              const v = c.parsed.y;
+              if (v == null) return '';
+              return ` ${c.dataset.label}: ${v>0?'+':''}${v.toFixed(2)}%`;
+            }
+          }
         }
       },
-      scales:{
-        x:{ticks:{color:'#BBB',font:{family:'DM Mono',size:9},maxTicksLimit:mob?5:12,maxRotation:45},grid:{color:'#1A1A1A'}},
-        y:{ticks:{color:'#BBB',font:{family:'DM Mono',size:9},callback:v=>v.toFixed(1)+'%'},grid:{color:'#1A1A1A'}}
+      scales: {
+        x: {
+          ticks: {
+            color: '#AAA',
+            font: { family: 'DM Mono', size: mob?7:9 },
+            maxRotation: 45,
+            maxTicksLimit: mob ? 6 : 13,
+          },
+          grid: { color: '#181818' }
+        },
+        y: {
+          ticks: {
+            color: '#AAA',
+            font: { family: 'DM Mono', size: 9 },
+            callback: v => (v>0?'+':'')+v.toFixed(2)+'%',
+            stepSize: 1,
+          },
+          grid: { color: '#181818' },
+          afterDataLimits: scale => {
+            const range = scale.max - scale.min;
+            const pad = Math.max(0.6, range * 0.12);
+            scale.max = scale.max + pad;
+            scale.min = scale.min - pad;
+          }
+        }
       }
-    }
+    },
+    plugins: [zeroLinePlugin]
   });
 }
 
@@ -465,32 +561,36 @@ function drawChart(labels,tclData,ihsgData,idx30Data) {
 // LOAD CHART
 // ═══════════════════════════════════════════
 async function loadChart() {
-  setChartStatus('','Memuat chart...');
+  setChartStatus('', 'Memuat chart...');
   const result = await fetchCSV(CONFIG.chartCsvUrl);
 
   if (result) {
     const parsed = parseCsvToChartData(result.text);
     if (parsed && parsed.labels.length > 0) {
-      const last = parsed.labels.length-1;
+      const last = parsed.labels.length - 1;
+      // Cards = nilai hari terakhir (daily %)
       setCards(parsed.tclData[last], parsed.ihsgData[last], parsed.idx30Data[last]);
       drawChart(parsed.labels, parsed.tclData, parsed.ihsgData, parsed.idx30Data);
-      setChartStatus('live',`Live (${result.src}) · ${parsed.labels.length} data points · ${fmtNow()}`);
+      setChartStatus('live', `Live (${result.src}) · ${parsed.labels.length} titik data · ${fmtNow()}`);
       return;
     }
   }
 
-  // Fallback — data dari A7:D19 per 1 Apr 2026
-  // A=Date | B=TCL | C=IDX30 | D=Composite/IHSG
+  // ── FALLBACK DATA — persis dari tabel screenshot 2 Apr 2026 ──
+  // Sumber: Image 2 screenshot, kolom B=TCL, C=IDX30, D=Composite
   const fb = {
-    labels:   ['6 Mar 2026','9 Mar 2026','10 Mar 2026','11 Mar 2026','12 Mar 2026','13 Mar 2026','16 Mar 2026','17 Mar 2026','25 Mar 2026','26 Mar 2026','27 Mar 2026','30 Mar 2026','31 Mar 2026','1 Apr 2026'],
-    tclData:  [-2.06,-1.75, 1.08,-2.28, 1.08,-1.44, 2.10, 1.93, 0.37,-1.03, 0.21, 1.88,-1.53,-0.75],
-    idx30Data:[-2.18,-3.21, 0.99,-0.63, 0.43,-2.20,-1.12, 1.40, 3.39,-2.10,-1.92,-0.59,-0.03, 1.21],
-    ihsgData: [-1.65,-3.38, 1.39,-0.70,-0.37,-3.15,-1.64, 1.19, 2.67,-1.93,-0.94,-0.08,-0.62, 1.93],
+    labels:   ['11 Mar 2026','12 Mar 2026','13 Mar 2026','16 Mar 2026','17 Mar 2026',
+               '25 Mar 2026','26 Mar 2026','27 Mar 2026','30 Mar 2026','31 Mar 2026',
+               '1 Apr 2026','2 Apr 2026'],
+    tclData:  [ -2.23,  1.15, -1.41,  2.14,  1.95,  0.39, -1.01,  0.17,  1.95, -1.51, -0.80, -1.79],
+    idx30Data:[ -0.63,  0.43, -2.20, -1.12,  1.40,  3.39, -2.10, -1.92, -0.59, -0.03,  1.20, -1.19],
+    ihsgData: [ -0.70, -0.37, -3.15, -1.64,  1.19,  2.67, -1.93, -0.94, -0.08, -0.62,  1.90, -2.24],
   };
-  const last=fb.labels.length-1;
-  setCards(fb.tclData[last],fb.ihsgData[last],fb.idx30Data[last]);
-  drawChart(fb.labels,fb.tclData,fb.ihsgData,fb.idx30Data);
-  setChartStatus('fallback','Fallback data · Live fetch tidak tersedia · Update manual: 1 Apr 2026');
+  const last = fb.labels.length - 1;
+  // Cards = nilai 2 Apr (hari terakhir)
+  setCards(fb.tclData[last], fb.ihsgData[last], fb.idx30Data[last]);
+  drawChart(fb.labels, fb.tclData, fb.ihsgData, fb.idx30Data);
+  setChartStatus('fallback', 'Fallback data · Update manual: 2 Apr 2026');
 }
 
 // ═══════════════════════════════════════════
