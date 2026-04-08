@@ -827,54 +827,36 @@ async function loadPerf() {
   }
 
   try {
-    const rows = parseCSVRows(result.text);
+    // Sheet format A1:B3 — no header, just 3 rows:
+    //   Row 1: TCL,       2.57%
+    //   Row 2: IDX30,     4.35%
+    //   Row 3: Composite, 4.42%
+    const rows = parseCSVRows(result.text).filter(r => r.length >= 2 && r[0].trim() !== '');
 
-    // Find header row
-    let hdrIdx = -1;
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i].map(h => (h||'').toUpperCase().trim());
-      if (r.includes('DATE') && r.includes('TCL')) { hdrIdx = i; break; }
-    }
-    if (hdrIdx < 0) throw new Error('Header tidak ditemukan');
-
-    const hdr   = rows[hdrIdx].map(h => (h||'').toUpperCase().trim());
-    const iDate = hdr.indexOf('DATE');
-    const iTCL  = hdr.indexOf('TCL');
-    const iIDX  = hdr.findIndex(h => h.includes('IDX30'));
-    const iComp = hdr.findIndex(h => h.includes('COMPOSITE') || h.includes('IHSG'));
-
-    if (iDate < 0 || iTCL < 0) throw new Error('Kolom TCL/Date tidak ditemukan');
-
-    // Month names for validation
-    const MONTHS = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Mei|Agu|Okt|Des)/i;
-    const pct = (r, i) => {
-      if (i < 0 || !r[i]) return null;
-      const n = parseFloat(r[i].replace(/%/g, '').trim());
+    const find = (keyword) => {
+      const row = rows.find(r => r[0].trim().toUpperCase().includes(keyword.toUpperCase()));
+      if (!row) return null;
+      const n = parseFloat(row[1].replace(/%/g, '').trim());
       return isNaN(n) ? null : n;
     };
 
-    // Filter valid date rows
-    const dataRows = rows.slice(hdrIdx + 1).filter(r => {
-      const d = (r[iDate] || '').trim();
-      if (d.length < 5 || !MONTHS.test(d)) return false;
-      if (!/\d/.test(d)) return false;
-      const v = pct(r, iTCL);
-      return v !== null && Math.abs(v) <= 20;
-    });
+    const tclVal  = find('TCL');
+    const idxVal  = find('IDX30');
+    const compVal = find('COMPOSITE') ?? find('COMPOSITE') ?? (() => {
+      const row = rows.find(r => /composite/i.test(r[0]));
+      if (!row) return null;
+      const n = parseFloat(row[1].replace(/%/g,'').trim());
+      return isNaN(n) ? null : n;
+    })();
 
-    if (!dataRows.length) throw new Error('Tidak ada baris data valid');
+    if (tclVal === null) throw new Error('Nilai TCL tidak ditemukan');
 
-    // Get LATEST row (last row = most recent date)
-    const lastRow = dataRows[dataRows.length - 1];
-    const lastDate = lastRow[iDate].trim();
-    const lastTCL  = pct(lastRow, iTCL);
-    const lastIDX  = pct(lastRow, iIDX);
-    const lastComp = pct(lastRow, iComp);
-
-    setCards(lastDate, lastTCL, lastComp, lastIDX);
+    // Use today's date as closing date label
+    const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+    setCards(today, tclVal, compVal, idxVal);
 
     setPerfStatus('live',
-      `<span class="live-label">● LIVE</span> — Data penutupan: <span class="highlight">${lastDate}</span> · dimuat: <span class="highlight">${fmtNow()}</span> (${result.src})`
+      `<span class="live-label">● LIVE</span> — Data terbaru sheet · dimuat: <span class="highlight">${fmtNow()}</span>`
     );
   } catch(err) {
     setPerfStatus('error', `<span class="error-label">✕ Parse error</span> — ${err.message}`);
